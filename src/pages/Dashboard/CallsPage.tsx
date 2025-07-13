@@ -426,6 +426,21 @@ export const CallsPage: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      <CallDetailsDialog
+        call={selectedCall}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onConvertToTicket={handleConvertToTicket}
+      />
+
+      <TicketFormDialog
+        open={ticketFormOpen}
+        onOpenChange={setTicketFormOpen}
+        onSave={handleTicketSave}
+      />
     </div>
   );
 };

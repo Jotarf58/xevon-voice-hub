@@ -401,6 +401,21 @@ export const MessagesPage: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      <MessageDetailsDialog
+        message={selectedMessage}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onConvertToTicket={handleConvertToTicket}
+      />
+
+      <TicketFormDialog
+        open={ticketFormOpen}
+        onOpenChange={setTicketFormOpen}
+        onSave={handleTicketSave}
+      />
     </div>
   );
 };

@@ -14,7 +14,8 @@ import {
   Calendar,
   MoreHorizontal,
   Edit,
-  Trash2
+  Trash2,
+  Eye
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -29,6 +30,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TaskDetailsDialog } from '@/components/Dialogs/TaskDetailsDialog';
+import { TaskFormDialog } from '@/components/Dialogs/TaskFormDialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface Task {
   id: string;
@@ -46,9 +50,14 @@ interface Task {
 
 export const TasksPage: React.FC = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   // Mock data - would come from webhooks in real app
   const [tasks] = useState<Task[]>([
@@ -142,6 +151,46 @@ export const TasksPage: React.FC = () => {
     completed: filteredTasks.filter(t => t.status === 'completed').length
   };
 
+  const handleViewDetails = (task: Task) => {
+    setSelectedTask(task);
+    setDetailsOpen(true);
+  };
+
+  const handleEdit = (task: Task) => {
+    setEditingTask(task);
+    setFormOpen(true);
+  };
+
+  const handleDelete = (taskId: string) => {
+    // Here you would typically make an API call to delete the task
+    toast({
+      title: "Tarefa eliminada",
+      description: "A tarefa foi eliminada com sucesso.",
+    });
+  };
+
+  const handleSave = (taskData: any) => {
+    if (editingTask) {
+      // Update existing task
+      toast({
+        title: "Tarefa actualizada",
+        description: "A tarefa foi actualizada com sucesso.",
+      });
+    } else {
+      // Create new task
+      toast({
+        title: "Tarefa criada",
+        description: "A nova tarefa foi criada com sucesso.",
+      });
+    }
+    setEditingTask(null);
+  };
+
+  const handleNewTask = () => {
+    setEditingTask(null);
+    setFormOpen(true);
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -152,7 +201,10 @@ export const TasksPage: React.FC = () => {
             Gerencie suas tarefas e acompanhe o progresso da equipe
           </p>
         </div>
-        <Button className="bg-gradient-primary hover:bg-gradient-primary/90">
+        <Button 
+          className="bg-gradient-primary hover:bg-gradient-primary/90"
+          onClick={handleNewTask}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Nova Tarefa
         </Button>
@@ -301,11 +353,18 @@ export const TasksPage: React.FC = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleViewDetails(task)}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Ver Detalhes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEdit(task)}>
                       <Edit className="mr-2 h-4 w-4" />
                       Editar
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">
+                    <DropdownMenuItem 
+                      className="text-destructive"
+                      onClick={() => handleDelete(task.id)}
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Eliminar
                     </DropdownMenuItem>
@@ -325,13 +384,31 @@ export const TasksPage: React.FC = () => {
             <p className="text-muted-foreground mb-4">
               Não há tarefas que correspondam aos seus critérios de busca.
             </p>
-            <Button className="bg-gradient-primary hover:bg-gradient-primary/90">
+            <Button 
+              className="bg-gradient-primary hover:bg-gradient-primary/90"
+              onClick={handleNewTask}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Criar Nova Tarefa
             </Button>
           </CardContent>
         </Card>
       )}
+
+      <TaskDetailsDialog
+        task={selectedTask}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
+
+      <TaskFormDialog
+        task={editingTask || undefined}
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        onSave={handleSave}
+      />
     </div>
   );
 };

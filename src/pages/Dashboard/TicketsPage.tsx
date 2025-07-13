@@ -16,8 +16,12 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  MessageSquare
+  MessageSquare,
+  Eye
 } from 'lucide-react';
+import { TicketDetailsDialog } from '@/components/Dialogs/TicketDetailsDialog';
+import { TicketFormDialog } from '@/components/Dialogs/TicketFormDialog';
+import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,9 +52,14 @@ interface TicketType {
 
 export const TicketsPage: React.FC = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
+  const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingTicket, setEditingTicket] = useState<TicketType | null>(null);
 
   // Mock data - would come from n8n webhooks in real app
   const [tickets] = useState<TicketType[]>([
@@ -181,6 +190,43 @@ export const TicketsPage: React.FC = () => {
     closed: filteredTickets.filter(t => t.status === 'closed').length
   };
 
+  const handleViewDetails = (ticket: TicketType) => {
+    setSelectedTicket(ticket);
+    setDetailsOpen(true);
+  };
+
+  const handleEdit = (ticket: TicketType) => {
+    setEditingTicket(ticket);
+    setFormOpen(true);
+  };
+
+  const handleDelete = (ticketId: string) => {
+    toast({
+      title: "Ticket eliminado",
+      description: "O ticket foi eliminado com sucesso.",
+    });
+  };
+
+  const handleSave = (ticketData: any) => {
+    if (editingTicket) {
+      toast({
+        title: "Ticket actualizado",
+        description: "O ticket foi actualizado com sucesso.",
+      });
+    } else {
+      toast({
+        title: "Ticket criado",
+        description: "O novo ticket foi criado com sucesso.",
+      });
+    }
+    setEditingTicket(null);
+  };
+
+  const handleNewTicket = () => {
+    setEditingTicket(null);
+    setFormOpen(true);
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -191,7 +237,10 @@ export const TicketsPage: React.FC = () => {
             Gerencie ocorrências e solicitações do sistema
           </p>
         </div>
-        <Button className="bg-gradient-primary hover:bg-gradient-primary/90">
+        <Button 
+          className="bg-gradient-primary hover:bg-gradient-primary/90"
+          onClick={handleNewTicket}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Novo Ticket
         </Button>
@@ -355,11 +404,18 @@ export const TicketsPage: React.FC = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleViewDetails(ticket)}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Ver Detalhes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEdit(ticket)}>
                       <Edit className="mr-2 h-4 w-4" />
                       Editar
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">
+                    <DropdownMenuItem 
+                      className="text-destructive"
+                      onClick={() => handleDelete(ticket.id)}
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Eliminar
                     </DropdownMenuItem>
@@ -379,13 +435,31 @@ export const TicketsPage: React.FC = () => {
             <p className="text-muted-foreground mb-4">
               Não há tickets que correspondam aos seus critérios de busca.
             </p>
-            <Button className="bg-gradient-primary hover:bg-gradient-primary/90">
+            <Button 
+              className="bg-gradient-primary hover:bg-gradient-primary/90"
+              onClick={handleNewTicket}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Criar Novo Ticket
             </Button>
           </CardContent>
         </Card>
       )}
+
+      <TicketDetailsDialog
+        ticket={selectedTicket}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
+
+      <TicketFormDialog
+        ticket={editingTicket || undefined}
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        onSave={handleSave}
+      />
     </div>
   );
 };
