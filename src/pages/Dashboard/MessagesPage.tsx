@@ -15,6 +15,8 @@ import {
   User,
   Calendar
 } from 'lucide-react';
+import { MessageDetailsDialog } from '@/components/Dialogs/MessageDetailsDialog';
+import { TicketFormDialog } from '@/components/Dialogs/TicketFormDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +50,26 @@ interface Message {
 export const MessagesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [ticketFormOpen, setTicketFormOpen] = useState(false);
+
+  const handleEdit = (message: Message) => {
+    console.log('Edit message:', message);
+  };
+
+  const handleDelete = (messageId: string) => {
+    console.log('Delete message:', messageId);
+  };
+
+  const handleConvertToTicket = (message: Message) => {
+    setTicketFormOpen(true);
+  };
+
+  const handleTicketSave = (ticketData: any) => {
+    console.log('Save ticket from message:', ticketData);
+    setTicketFormOpen(false);
+  };
   const [filterDirection, setFilterDirection] = useState('all');
 
   // Mock data - would come from WhatsApp/Twilio webhooks in real app

@@ -16,6 +16,8 @@ import {
   FileText,
   ArrowUpRight
 } from 'lucide-react';
+import { CallDetailsDialog } from '@/components/Dialogs/CallDetailsDialog';
+import { TicketFormDialog } from '@/components/Dialogs/TicketFormDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +50,26 @@ interface CallRecord {
 export const CallsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [selectedCall, setSelectedCall] = useState<CallRecord | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [ticketFormOpen, setTicketFormOpen] = useState(false);
+
+  const handleEdit = (call: CallRecord) => {
+    console.log('Edit call:', call);
+  };
+
+  const handleDelete = (callId: string) => {
+    console.log('Delete call:', callId);
+  };
+
+  const handleConvertToTicket = (call: CallRecord) => {
+    setTicketFormOpen(true);
+  };
+
+  const handleTicketSave = (ticketData: any) => {
+    console.log('Save ticket from call:', ticketData);
+    setTicketFormOpen(false);
+  };
   const [filterDirection, setFilterDirection] = useState('all');
 
   // Mock data - would come from Twilio webhooks in real app
