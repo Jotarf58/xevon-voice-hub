@@ -8,7 +8,9 @@ import {
   LogOut,
   User,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Users,
+  Settings
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,6 +36,7 @@ const menuItems = [
   { title: "Tickets", url: "/dashboard/tickets", icon: Ticket },
   { title: "Chamadas", url: "/dashboard/calls", icon: Phone },
   { title: "Mensagens", url: "/dashboard/messages", icon: MessageSquare },
+  { title: "Utilizadores", url: "/dashboard/users", icon: Users },
 ];
 
 export function AppSidebar() {

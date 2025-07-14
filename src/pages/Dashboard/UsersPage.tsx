@@ -103,7 +103,7 @@ export const UsersPage: React.FC = () => {
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
-    role: 'user' as const,
+    role: 'user' as 'user' | 'admin' | 'manager',
     team: '',
     password: ''
   });

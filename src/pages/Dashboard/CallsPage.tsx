@@ -34,17 +34,17 @@ import {
 
 interface CallRecord {
   id: string;
-  phoneNumber: string;
-  direction: 'inbound' | 'outbound';
-  status: 'completed' | 'in_progress' | 'failed' | 'missed';
-  duration: number; // in seconds
+  customerName: string;
+  customerPhone: string;
+  status: 'incoming' | 'active' | 'completed' | 'missed' | 'error';
+  duration: string;
   startTime: string;
   endTime?: string;
+  location: string;
   twilioSid: string;
-  aiUsed: boolean;
-  voiceSynthesis?: string;
-  convertedToTicket?: string;
-  errorMessage?: string;
+  recordingUrl?: string;
+  aiAnalysis?: string;
+  elevenlabsVoice?: string;
 }
 
 export const CallsPage: React.FC = () => {
@@ -70,74 +70,61 @@ export const CallsPage: React.FC = () => {
     console.log('Save ticket from call:', ticketData);
     setTicketFormOpen(false);
   };
-  const [filterDirection, setFilterDirection] = useState('all');
 
-  // Mock data - would come from Twilio webhooks in real app
-  const [calls] = useState<CallRecord[]>([
+  const [calls, setCalls] = useState<CallRecord[]>([
     {
-      id: 'CALL-001',
-      phoneNumber: '+351912345678',
-      direction: 'inbound',
-      status: 'in_progress',
-      duration: 0,
-      startTime: '2024-01-13T11:30:00Z',
+      id: 'call-001',
+      customerName: 'João Silva',
+      customerPhone: '+351 912 345 678',
+      status: 'completed',
+      duration: '5:23',
+      startTime: '2024-01-13T10:30:00Z',
+      endTime: '2024-01-13T10:35:23Z',
+      location: 'Lisboa',
       twilioSid: 'CA1234567890abcdef',
-      aiUsed: true,
-      voiceSynthesis: 'ElevenLabs - Voice ID: Rachel'
+      recordingUrl: 'https://api.twilio.com/recordings/RE123',
+      aiAnalysis: 'Cliente satisfeito com a resolução do problema técnico.',
+      elevenlabsVoice: 'João - Voz Natural PT'
     },
     {
-      id: 'CALL-002',
-      phoneNumber: '+351987654321',
-      direction: 'inbound',
-      status: 'completed',
-      duration: 245,
-      startTime: '2024-01-13T10:15:00Z',
-      endTime: '2024-01-13T10:19:05Z',
-      twilioSid: 'CA0987654321fedcba',
-      aiUsed: true,
-      voiceSynthesis: 'ElevenLabs - Voice ID: Adam',
-      convertedToTicket: 'TK-005'
+      id: 'call-002',
+      customerName: 'Maria Santos',
+      customerPhone: '+351 963 789 012',
+      status: 'active',
+      duration: '2:45',
+      startTime: '2024-01-13T11:15:00Z',
+      location: 'Porto',
+      twilioSid: 'CA1234567890abcdefg',
+      elevenlabsVoice: 'Maria - Voz Feminina PT'
     },
     {
-      id: 'CALL-003',
-      phoneNumber: '+351555123456',
-      direction: 'outbound',
-      status: 'failed',
-      duration: 0,
-      startTime: '2024-01-13T09:45:00Z',
-      twilioSid: 'CA5555123456789abc',
-      aiUsed: false,
-      errorMessage: 'Connection timeout - carrier not responding'
-    },
-    {
-      id: 'CALL-004',
-      phoneNumber: '+351666789012',
-      direction: 'inbound',
+      id: 'call-003',
+      customerName: 'Pedro Costa',
+      customerPhone: '+351 934 567 890',
       status: 'missed',
-      duration: 0,
-      startTime: '2024-01-13T08:20:00Z',
-      twilioSid: 'CA6667890123456def',
-      aiUsed: false
+      duration: '0:00',
+      startTime: '2024-01-13T09:45:00Z',
+      location: 'Coimbra',
+      twilioSid: 'CA1234567890abcdefh'
     },
     {
-      id: 'CALL-005',
-      phoneNumber: '+351777890123',
-      direction: 'inbound',
-      status: 'completed',
-      duration: 412,
-      startTime: '2024-01-12T16:30:00Z',
-      endTime: '2024-01-12T16:37:22Z',
-      twilioSid: 'CA7778901234567890',
-      aiUsed: true,
-      voiceSynthesis: 'ElevenLabs - Voice ID: Bella'
+      id: 'call-004',
+      customerName: 'Ana Rodrigues',
+      customerPhone: '+351 987 654 321',
+      status: 'error',
+      duration: '1:12',
+      startTime: '2024-01-13T08:30:00Z',
+      location: 'Braga',
+      twilioSid: 'CA1234567890abcdefi',
+      aiAnalysis: 'Erro na conexão durante a chamada.'
     }
   ]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'in_progress': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'failed': return 'bg-red-100 text-red-800 border-red-200';
+      case 'active': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'error': return 'bg-red-100 text-red-800 border-red-200';
       case 'missed': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -146,8 +133,8 @@ export const CallsPage: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed': return <PhoneCall className="h-4 w-4 text-green-600" />;
-      case 'in_progress': return <Play className="h-4 w-4 text-blue-600" />;
-      case 'failed': return <PhoneOff className="h-4 w-4 text-red-600" />;
+      case 'active': return <Play className="h-4 w-4 text-blue-600" />;
+      case 'error': return <PhoneOff className="h-4 w-4 text-red-600" />;
       case 'missed': return <Phone className="h-4 w-4 text-yellow-600" />;
       default: return <Phone className="h-4 w-4" />;
     }
@@ -156,40 +143,30 @@ export const CallsPage: React.FC = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'completed': return 'Concluída';
-      case 'in_progress': return 'Em Andamento';
-      case 'failed': return 'Falhou';
+      case 'active': return 'Em Andamento';
+      case 'error': return 'Erro';
       case 'missed': return 'Perdida';
       default: return status;
     }
   };
 
-  const getDirectionLabel = (direction: string) => {
-    return direction === 'inbound' ? 'Recebida' : 'Efetuada';
-  };
-
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const filteredCalls = calls
     .filter(call => 
-      call.phoneNumber.includes(searchTerm) ||
+      call.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      call.customerPhone.includes(searchTerm) ||
       call.twilioSid.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    .filter(call => filterStatus === 'all' || call.status === filterStatus)
-    .filter(call => filterDirection === 'all' || call.direction === filterDirection);
+    .filter(call => filterStatus === 'all' || call.status === filterStatus);
 
   const callStats = {
     total: filteredCalls.length,
     completed: filteredCalls.filter(c => c.status === 'completed').length,
-    inProgress: filteredCalls.filter(c => c.status === 'in_progress').length,
-    failed: filteredCalls.filter(c => c.status === 'failed').length,
+    active: filteredCalls.filter(c => c.status === 'active').length,
+    error: filteredCalls.filter(c => c.status === 'error').length,
     missed: filteredCalls.filter(c => c.status === 'missed').length
   };
 
-  const liveCalls = filteredCalls.filter(c => c.status === 'in_progress');
+  const liveCalls = filteredCalls.filter(c => c.status === 'active');
 
   return (
     <div className="p-6 space-y-6">
@@ -222,18 +199,21 @@ export const CallsPage: React.FC = () => {
                   <div className="flex items-center gap-4">
                     <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
                     <div>
-                      <p className="font-medium text-foreground">{call.phoneNumber}</p>
+                      <p className="font-medium text-foreground">{call.customerName}</p>
                       <p className="text-sm text-muted-foreground">
-                        Iniciada: {new Date(call.startTime).toLocaleTimeString('pt-BR')}
+                        {call.customerPhone} • {new Date(call.startTime).toLocaleTimeString('pt-BR')}
                       </p>
                     </div>
-                    {call.aiUsed && (
+                    {call.elevenlabsVoice && (
                       <Badge variant="outline" className="text-xs">
                         🤖 IA Ativa
                       </Badge>
                     )}
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setSelectedCall(call);
+                    setDetailsOpen(true);
+                  }}>
                     <ArrowUpRight className="h-4 w-4 mr-2" />
                     Monitorar
                   </Button>
@@ -275,7 +255,7 @@ export const CallsPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <Play className="h-5 w-5 text-blue-500" />
               <div>
-                <p className="text-2xl font-bold text-foreground">{callStats.inProgress}</p>
+                <p className="text-2xl font-bold text-foreground">{callStats.active}</p>
                 <p className="text-sm text-muted-foreground">Em Andamento</p>
               </div>
             </div>
@@ -287,8 +267,8 @@ export const CallsPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <PhoneOff className="h-5 w-5 text-red-500" />
               <div>
-                <p className="text-2xl font-bold text-foreground">{callStats.failed}</p>
-                <p className="text-sm text-muted-foreground">Falharam</p>
+                <p className="text-2xl font-bold text-foreground">{callStats.error}</p>
+                <p className="text-sm text-muted-foreground">Erro</p>
               </div>
             </div>
           </CardContent>
@@ -315,7 +295,7 @@ export const CallsPage: React.FC = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por número ou Twilio SID..."
+                  placeholder="Buscar por nome, número ou Twilio SID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -329,19 +309,9 @@ export const CallsPage: React.FC = () => {
               <SelectContent>
                 <SelectItem value="all">Todos os Status</SelectItem>
                 <SelectItem value="completed">Concluída</SelectItem>
-                <SelectItem value="in_progress">Em Andamento</SelectItem>
-                <SelectItem value="failed">Falhou</SelectItem>
+                <SelectItem value="active">Em Andamento</SelectItem>
+                <SelectItem value="error">Erro</SelectItem>
                 <SelectItem value="missed">Perdida</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterDirection} onValueChange={setFilterDirection}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Direção" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="inbound">Recebidas</SelectItem>
-                <SelectItem value="outbound">Efetuadas</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -358,7 +328,7 @@ export const CallsPage: React.FC = () => {
                   <div className="flex items-center gap-3 mb-2">
                     <div className="flex items-center gap-2">
                       {getStatusIcon(call.status)}
-                      <h3 className="font-semibold text-foreground text-lg">{call.phoneNumber}</h3>
+                      <h3 className="font-semibold text-foreground text-lg">{call.customerName}</h3>
                     </div>
                     <Badge variant="outline" className="text-xs">
                       {call.id}
@@ -366,47 +336,37 @@ export const CallsPage: React.FC = () => {
                     <Badge variant="outline" className={`text-xs border ${getStatusColor(call.status)}`}>
                       {getStatusLabel(call.status)}
                     </Badge>
-                    <Badge variant={call.direction === 'inbound' ? 'default' : 'secondary'} className="text-xs">
-                      {getDirectionLabel(call.direction)}
-                    </Badge>
                   </div>
                   
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
                     <div>
-                      <span className="font-medium">Duração:</span> {formatDuration(call.duration)}
+                      <span className="font-medium">Telefone:</span> {call.customerPhone}
+                    </div>
+                    <div>
+                      <span className="font-medium">Duração:</span> {call.duration}
                     </div>
                     <div>
                       <span className="font-medium">Início:</span> {new Date(call.startTime).toLocaleString('pt-BR')}
                     </div>
-                    {call.endTime && (
-                      <div>
-                        <span className="font-medium">Fim:</span> {new Date(call.endTime).toLocaleString('pt-BR')}
-                      </div>
-                    )}
                     <div>
-                      <span className="font-medium">Twilio SID:</span> {call.twilioSid}
+                      <span className="font-medium">Local:</span> {call.location}
                     </div>
                   </div>
                   
                   <div className="flex flex-wrap gap-2">
-                    {call.aiUsed && (
+                    {call.elevenlabsVoice && (
                       <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                        🤖 IA Utilizada
+                        🤖 {call.elevenlabsVoice}
                       </Badge>
                     )}
-                    {call.voiceSynthesis && (
+                    {call.recordingUrl && (
                       <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                        🎤 {call.voiceSynthesis}
+                        🎧 Gravação Disponível
                       </Badge>
                     )}
-                    {call.convertedToTicket && (
+                    {call.aiAnalysis && (
                       <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                        📋 Ticket: {call.convertedToTicket}
-                      </Badge>
-                    )}
-                    {call.errorMessage && (
-                      <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
-                        ⚠️ {call.errorMessage}
+                        📊 Análise IA
                       </Badge>
                     )}
                   </div>
@@ -419,12 +379,15 @@ export const CallsPage: React.FC = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      setSelectedCall(call);
+                      setDetailsOpen(true);
+                    }}>
                       <FileText className="mr-2 h-4 w-4" />
                       Ver Detalhes
                     </DropdownMenuItem>
-                    {call.status === 'completed' && !call.convertedToTicket && (
-                      <DropdownMenuItem>
+                    {call.status === 'completed' && (
+                      <DropdownMenuItem onClick={() => handleConvertToTicket(call)}>
                         <ArrowUpRight className="mr-2 h-4 w-4" />
                         Converter em Ticket
                       </DropdownMenuItem>

@@ -11,6 +11,8 @@ import { TasksPage } from "@/pages/Dashboard/TasksPage";
 import { TicketsPage } from "@/pages/Dashboard/TicketsPage";
 import { CallsPage } from "@/pages/Dashboard/CallsPage";
 import { MessagesPage } from "@/pages/Dashboard/MessagesPage";
+import { UsersPage } from "@/pages/Dashboard/UsersPage";
+import { SettingsPage } from "@/pages/Dashboard/SettingsPage";
 import { DashboardLayout } from "@/components/Layout/DashboardLayout";
 import NotFound from "./pages/NotFound";
 
@@ -94,6 +96,26 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardLayout>
                     <MessagesPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/users" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <UsersPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard/settings" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <SettingsPage />
                   </DashboardLayout>
                 </ProtectedRoute>
               } 

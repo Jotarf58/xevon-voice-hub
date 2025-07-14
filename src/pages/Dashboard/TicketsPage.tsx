@@ -1,27 +1,24 @@
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Plus, 
-  Search, 
-  Ticket,
+  Ticket, 
+  Plus,
+  Search,
+  Filter,
+  MoreHorizontal,
   Clock,
-  AlertCircle,
+  AlertTriangle,
   CheckCircle,
   User,
-  Calendar,
-  MoreHorizontal,
-  Edit,
-  Trash2,
+  Phone,
   MessageSquare,
-  Eye
+  Calendar
 } from 'lucide-react';
 import { TicketDetailsDialog } from '@/components/Dialogs/TicketDetailsDialog';
 import { TicketFormDialog } from '@/components/Dialogs/TicketFormDialog';
-import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,96 +37,92 @@ interface TicketType {
   id: string;
   title: string;
   description: string;
-  priority: 'low' | 'medium' | 'high' | 'critical';
   status: 'open' | 'in_progress' | 'proposed_solution' | 'closed';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
   assignee: string;
   team: string;
-  createdBy: string;
+  category: string;
+  source: 'call' | 'whatsapp' | 'manual';
+  customer: string;
+  customerPhone: string;
   createdAt: string;
-  source: 'manual' | 'n8n_webhook' | 'call_conversion' | 'message_conversion';
-  sourceDetails?: string;
+  updatedAt: string;
+  n8nWebhook?: string;
 }
 
 export const TicketsPage: React.FC = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
+  const [filterTeam, setFilterTeam] = useState('all');
   const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editingTicket, setEditingTicket] = useState<TicketType | null>(null);
 
-  // Mock data - would come from n8n webhooks in real app
-  const [tickets] = useState<TicketType[]>([
+  const [tickets, setTickets] = useState<TicketType[]>([
     {
-      id: 'TK-001',
-      title: 'Erro na integração WhatsApp Business',
-      description: 'Cliente reporta que mensagens não estão sendo entregues via webhook',
-      priority: 'high',
+      id: 'tick-001',
+      title: 'Configuração N8N não funciona',
+      description: 'Cliente reporta que a automação criada não está a funcionar corretamente',
       status: 'open',
+      priority: 'high',
       assignee: 'João Silva',
       team: 'Technical',
-      createdBy: 'n8n_webhook',
+      category: 'Automação',
+      source: 'call',
+      customer: 'António Costa',
+      customerPhone: '+351 912 345 678',
       createdAt: '2024-01-13T10:30:00Z',
-      source: 'n8n_webhook',
-      sourceDetails: 'webhook-whatsapp-error'
+      updatedAt: '2024-01-13T10:30:00Z',
+      n8nWebhook: 'https://hooks.xevon.com/webhook/n8n-config'
     },
     {
-      id: 'TK-002',
-      title: 'Falha na síntese de voz ElevenLabs',
-      description: 'API retornando erro 429 - rate limit exceeded durante chamadas',
-      priority: 'critical',
+      id: 'tick-002',
+      title: 'Problema com integração WhatsApp',
+      description: 'Mensagens não estão a ser enviadas via WhatsApp Business API',
       status: 'in_progress',
+      priority: 'urgent',
       assignee: 'Maria Santos',
-      team: 'Technical',
-      createdBy: 'n8n_webhook',
-      createdAt: '2024-01-13T09:15:00Z',
-      source: 'call_conversion',
-      sourceDetails: 'Chamada ID: CALL-789'
-    },
-    {
-      id: 'TK-003',
-      title: 'Solicitação de configuração Twilio',
-      description: 'Cliente quer adicionar novo número para campanhas',
-      priority: 'medium',
-      status: 'proposed_solution',
-      assignee: 'Pedro Costa',
       team: 'Support',
-      createdBy: 'Admin User',
-      createdAt: '2024-01-12T16:45:00Z',
-      source: 'manual'
+      category: 'Integração',
+      source: 'whatsapp',
+      customer: 'Sofia Pereira',
+      customerPhone: '+351 963 789 012',
+      createdAt: '2024-01-13T09:15:00Z',
+      updatedAt: '2024-01-13T11:20:00Z'
     },
     {
-      id: 'TK-004',
-      title: 'Timeout em workflow n8n',
-      description: 'Workflow de processamento de mensagens excedendo 30s',
+      id: 'tick-003',
+      title: 'Solicitação de nova funcionalidade',
+      description: 'Cliente quer adicionar suporte para Telegram na automação',
+      status: 'proposed_solution',
       priority: 'medium',
-      status: 'closed',
-      assignee: 'João Silva',
+      assignee: 'Pedro Costa',
       team: 'Technical',
-      createdBy: 'n8n_webhook',
-      createdAt: '2024-01-11T14:20:00Z',
-      source: 'n8n_webhook',
-      sourceDetails: 'workflow-message-processing'
+      category: 'Funcionalidade',
+      source: 'manual',
+      customer: 'Ricardo Oliveira',
+      customerPhone: '+351 934 567 890',
+      createdAt: '2024-01-12T16:45:00Z',
+      updatedAt: '2024-01-13T08:30:00Z'
     }
   ]);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'critical': return 'bg-red-600 text-white';
-      case 'high': return 'bg-red-500 text-white';
-      case 'medium': return 'bg-yellow-500 text-white';
-      case 'low': return 'bg-green-500 text-white';
-      default: return 'bg-gray-500 text-white';
+      case 'urgent': return 'bg-red-100 text-red-800 border-red-200';
+      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open': return 'bg-red-100 text-red-800 border-red-200';
-      case 'in_progress': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'open': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'in_progress': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'proposed_solution': return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'closed': return 'bg-green-100 text-green-800 border-green-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -138,10 +131,19 @@ export const TicketsPage: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'open': return <AlertCircle className="h-4 w-4" />;
-      case 'in_progress': return <Clock className="h-4 w-4" />;
-      case 'proposed_solution': return <MessageSquare className="h-4 w-4" />;
-      case 'closed': return <CheckCircle className="h-4 w-4" />;
+      case 'open': return <Ticket className="h-4 w-4 text-blue-600" />;
+      case 'in_progress': return <Clock className="h-4 w-4 text-yellow-600" />;
+      case 'proposed_solution': return <AlertTriangle className="h-4 w-4 text-purple-600" />;
+      case 'closed': return <CheckCircle className="h-4 w-4 text-green-600" />;
+      default: return <Ticket className="h-4 w-4" />;
+    }
+  };
+
+  const getSourceIcon = (source: string) => {
+    switch (source) {
+      case 'call': return <Phone className="h-4 w-4" />;
+      case 'whatsapp': return <MessageSquare className="h-4 w-4" />;
+      case 'manual': return <User className="h-4 w-4" />;
       default: return <Ticket className="h-4 w-4" />;
     }
   };
@@ -156,31 +158,25 @@ export const TicketsPage: React.FC = () => {
     }
   };
 
-  const getSourceLabel = (source: string) => {
-    switch (source) {
-      case 'manual': return 'Manual';
-      case 'n8n_webhook': return 'n8n Webhook';
-      case 'call_conversion': return 'Chamada Convertida';
-      case 'message_conversion': return 'Mensagem Convertida';
-      default: return source;
+  const getPriorityLabel = (priority: string) => {
+    switch (priority) {
+      case 'urgent': return 'Urgente';
+      case 'high': return 'Alta';
+      case 'medium': return 'Média';
+      case 'low': return 'Baixa';
+      default: return priority;
     }
   };
 
-  const canViewTicket = (ticket: TicketType) => {
-    if (user?.role === 'admin') return true;
-    if (user?.role === 'manager' && ticket.team === user.team) return true;
-    if (ticket.assignee === user?.name) return true;
-    return false;
-  };
-
   const filteredTickets = tickets
-    .filter(canViewTicket)
     .filter(ticket => 
       ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ticket.description.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .filter(ticket => filterStatus === 'all' || ticket.status === filterStatus)
-    .filter(ticket => filterPriority === 'all' || ticket.priority === filterPriority);
+    .filter(ticket => filterPriority === 'all' || ticket.priority === filterPriority)
+    .filter(ticket => filterTeam === 'all' || ticket.team === filterTeam);
 
   const ticketStats = {
     total: filteredTickets.length,
@@ -190,9 +186,9 @@ export const TicketsPage: React.FC = () => {
     closed: filteredTickets.filter(t => t.status === 'closed').length
   };
 
-  const handleViewDetails = (ticket: TicketType) => {
-    setSelectedTicket(ticket);
-    setDetailsOpen(true);
+  const handleNewTicket = () => {
+    setEditingTicket(null);
+    setFormOpen(true);
   };
 
   const handleEdit = (ticket: TicketType) => {
@@ -201,30 +197,28 @@ export const TicketsPage: React.FC = () => {
   };
 
   const handleDelete = (ticketId: string) => {
-    toast({
-      title: "Ticket eliminado",
-      description: "O ticket foi eliminado com sucesso.",
-    });
+    setTickets(tickets.filter(t => t.id !== ticketId));
   };
 
   const handleSave = (ticketData: any) => {
     if (editingTicket) {
-      toast({
-        title: "Ticket actualizado",
-        description: "O ticket foi actualizado com sucesso.",
-      });
+      const updatedTicket = {
+        ...editingTicket,
+        ...ticketData,
+        updatedAt: new Date().toISOString()
+      };
+      setTickets(tickets.map(t => t.id === editingTicket.id ? updatedTicket : t));
     } else {
-      toast({
-        title: "Ticket criado",
-        description: "O novo ticket foi criado com sucesso.",
-      });
+      const newTicket = {
+        ...ticketData,
+        id: `tick-${tickets.length + 1}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      setTickets([...tickets, newTicket]);
     }
+    setFormOpen(false);
     setEditingTicket(null);
-  };
-
-  const handleNewTicket = () => {
-    setEditingTicket(null);
-    setFormOpen(true);
   };
 
   return (
@@ -234,12 +228,12 @@ export const TicketsPage: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Tickets</h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie ocorrências e solicitações do sistema
+            Gerir tickets de suporte e solicitações de clientes
           </p>
         </div>
         <Button 
-          className="bg-gradient-primary hover:bg-gradient-primary/90"
           onClick={handleNewTicket}
+          className="bg-gradient-primary text-primary-foreground"
         >
           <Plus className="mr-2 h-4 w-4" />
           Novo Ticket
@@ -263,7 +257,7 @@ export const TicketsPage: React.FC = () => {
         <Card className="border-2">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-red-500" />
+              <Ticket className="h-5 w-5 text-blue-500" />
               <div>
                 <p className="text-2xl font-bold text-foreground">{ticketStats.open}</p>
                 <p className="text-sm text-muted-foreground">Abertos</p>
@@ -275,7 +269,7 @@ export const TicketsPage: React.FC = () => {
         <Card className="border-2">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-500" />
+              <Clock className="h-5 w-5 text-yellow-500" />
               <div>
                 <p className="text-2xl font-bold text-foreground">{ticketStats.inProgress}</p>
                 <p className="text-sm text-muted-foreground">Em Progresso</p>
@@ -287,10 +281,10 @@ export const TicketsPage: React.FC = () => {
         <Card className="border-2">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-purple-500" />
+              <AlertTriangle className="h-5 w-5 text-purple-500" />
               <div>
                 <p className="text-2xl font-bold text-foreground">{ticketStats.proposedSolution}</p>
-                <p className="text-sm text-muted-foreground">Sol. Proposta</p>
+                <p className="text-sm text-muted-foreground">Solução Proposta</p>
               </div>
             </div>
           </CardContent>
@@ -317,7 +311,7 @@ export const TicketsPage: React.FC = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar tickets..."
+                  placeholder="Buscar por título, cliente ou descrição..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -341,11 +335,22 @@ export const TicketsPage: React.FC = () => {
                 <SelectValue placeholder="Prioridade" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas Prioridades</SelectItem>
-                <SelectItem value="critical">Crítica</SelectItem>
+                <SelectItem value="all">Todas as Prioridades</SelectItem>
+                <SelectItem value="urgent">Urgente</SelectItem>
                 <SelectItem value="high">Alta</SelectItem>
                 <SelectItem value="medium">Média</SelectItem>
                 <SelectItem value="low">Baixa</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterTeam} onValueChange={setFilterTeam}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Equipa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Equipas</SelectItem>
+                <SelectItem value="Technical">Técnica</SelectItem>
+                <SelectItem value="Support">Suporte</SelectItem>
+                <SelectItem value="Sales">Vendas</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -360,39 +365,54 @@ export const TicketsPage: React.FC = () => {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-foreground text-lg">{ticket.title}</h3>
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(ticket.status)}
+                      <h3 className="font-semibold text-foreground text-lg">{ticket.title}</h3>
+                    </div>
                     <Badge variant="outline" className="text-xs">
                       {ticket.id}
                     </Badge>
-                    <Badge className={`text-xs ${getPriorityColor(ticket.priority)}`}>
-                      {ticket.priority.toUpperCase()}
-                    </Badge>
-                    <Badge variant="outline" className={`text-xs border ${getStatusColor(ticket.status)} flex items-center gap-1`}>
-                      {getStatusIcon(ticket.status)}
+                    <Badge variant="outline" className={`text-xs border ${getStatusColor(ticket.status)}`}>
                       {getStatusLabel(ticket.status)}
                     </Badge>
+                    <Badge variant="outline" className={`text-xs border ${getPriorityColor(ticket.priority)}`}>
+                      {getPriorityLabel(ticket.priority)}
+                    </Badge>
                   </div>
-                  <p className="text-muted-foreground mb-4">{ticket.description}</p>
                   
-                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                  <p className="text-muted-foreground mb-3 line-clamp-2">
+                    {ticket.description}
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
                     <div className="flex items-center gap-1">
                       <User className="h-4 w-4" />
-                      <span>{ticket.assignee}</span>
+                      <span>{ticket.customer} ({ticket.customerPhone})</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {getSourceIcon(ticket.source)}
+                      <span>Origem: {ticket.source === 'call' ? 'Chamada' : ticket.source === 'whatsapp' ? 'WhatsApp' : 'Manual'}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      <span>{new Date(ticket.createdAt).toLocaleDateString('pt-BR')}</span>
+                      <span>{new Date(ticket.createdAt).toLocaleString('pt-BR')}</span>
                     </div>
-                    <div>
-                      <span className="font-medium">Equipe:</span> {ticket.team}
-                    </div>
-                    <div>
-                      <span className="font-medium">Origem:</span> {getSourceLabel(ticket.source)}
-                    </div>
-                    {ticket.sourceDetails && (
-                      <div>
-                        <span className="font-medium">Detalhes:</span> {ticket.sourceDetails}
-                      </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                      👤 {ticket.assignee}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                      🏢 {ticket.team}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                      📂 {ticket.category}
+                    </Badge>
+                    {ticket.n8nWebhook && (
+                      <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                        🔗 N8N Webhook
+                      </Badge>
                     )}
                   </div>
                 </div>
@@ -404,19 +424,19 @@ export const TicketsPage: React.FC = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleViewDetails(ticket)}>
-                      <Eye className="mr-2 h-4 w-4" />
+                    <DropdownMenuItem onClick={() => {
+                      setSelectedTicket(ticket);
+                      setDetailsOpen(true);
+                    }}>
+                      <Ticket className="mr-2 h-4 w-4" />
                       Ver Detalhes
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleEdit(ticket)}>
-                      <Edit className="mr-2 h-4 w-4" />
+                      <Calendar className="mr-2 h-4 w-4" />
                       Editar
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="text-destructive"
-                      onClick={() => handleDelete(ticket.id)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
+                    <DropdownMenuItem onClick={() => handleDelete(ticket.id)} className="text-red-600">
+                      <AlertTriangle className="mr-2 h-4 w-4" />
                       Eliminar
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -436,8 +456,8 @@ export const TicketsPage: React.FC = () => {
               Não há tickets que correspondam aos seus critérios de busca.
             </p>
             <Button 
-              className="bg-gradient-primary hover:bg-gradient-primary/90"
               onClick={handleNewTicket}
+              className="bg-gradient-primary text-primary-foreground"
             >
               <Plus className="mr-2 h-4 w-4" />
               Criar Novo Ticket
