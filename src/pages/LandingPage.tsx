@@ -21,7 +21,7 @@ export const LandingPage: React.FC = () => {
     },
     {
       icon: <Zap className="h-8 w-8" />,
-      title: "n8n Integration",
+      title: "Automação Avançada",
       description: "Workflows automatizados e integração perfeita com suas ferramentas existentes"
     }
   ];
@@ -65,7 +65,7 @@ export const LandingPage: React.FC = () => {
           </h1>
           
           <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto animate-fade-in">
-            A Xevon oferece soluções completas de automação utilizando n8n, Twilio e ElevenLabs 
+            A Xevon oferece soluções completas de automação utilizando Twilio e ElevenLabs 
             para transformar suas comunicações em uma experiência inteligente e eficiente.
           </p>
           

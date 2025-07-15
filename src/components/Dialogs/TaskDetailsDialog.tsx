@@ -16,7 +16,6 @@ interface Task {
   category: string;
   dueDate: string;
   createdBy: string;
-  n8nWorkflow?: string;
 }
 
 interface TaskDetailsDialogProps {
@@ -132,15 +131,6 @@ export const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
             </div>
           </div>
 
-          {task.n8nWorkflow && (
-            <>
-              <Separator />
-              <div>
-                <p className="text-sm font-medium">Workflow n8n</p>
-                <p className="text-sm text-muted-foreground font-mono">{task.n8nWorkflow}</p>
-              </div>
-            </>
-          )}
 
           <Separator />
 

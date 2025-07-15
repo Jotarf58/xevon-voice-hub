@@ -45,7 +45,6 @@ interface Task {
   category: string;
   dueDate: string;
   createdBy: string;
-  n8nWorkflow?: string;
 }
 
 export const TasksPage: React.FC = () => {
@@ -71,8 +70,7 @@ export const TasksPage: React.FC = () => {
       team: 'Technical',
       category: 'Integration',
       dueDate: '2024-01-15',
-      createdBy: 'Admin User',
-      n8nWorkflow: 'twilio-webhook-handler'
+      createdBy: 'Admin User'
     },
     {
       id: 'TSK-002',
@@ -96,8 +94,7 @@ export const TasksPage: React.FC = () => {
       team: 'Technical',
       category: 'Analytics',
       dueDate: '2024-01-10',
-      createdBy: 'Admin User',
-      n8nWorkflow: 'elevenlabs-analytics'
+      createdBy: 'Admin User'
     }
   ]);
 
@@ -129,7 +126,7 @@ export const TasksPage: React.FC = () => {
   };
 
   const canViewTask = (task: Task) => {
-    if (user?.role === 'admin') return true;
+    if (user?.role === 'developer') return true;
     if (user?.role === 'manager' && task.team === user.team) return true;
     if (task.assignee === user?.name) return true;
     return false;
@@ -338,11 +335,6 @@ export const TasksPage: React.FC = () => {
                     <div>
                       <span className="font-medium">Categoria:</span> {task.category}
                     </div>
-                    {task.n8nWorkflow && (
-                      <div>
-                        <span className="font-medium">Workflow n8n:</span> {task.n8nWorkflow}
-                      </div>
-                    )}
                   </div>
                 </div>
                 

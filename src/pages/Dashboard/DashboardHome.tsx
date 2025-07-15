@@ -63,7 +63,7 @@ export const DashboardHome: React.FC = () => {
     },
     {
       id: "TK-002", 
-      title: "Erro no webhook n8n",
+      title: "Erro no sistema de webhooks",
       priority: "média",
       status: "in_progress",
       assignee: "Maria Santos",

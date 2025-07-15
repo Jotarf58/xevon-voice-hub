@@ -22,7 +22,6 @@ interface TicketType {
   customerPhone: string;
   createdAt: string;
   updatedAt: string;
-  n8nWebhook?: string;
 }
 
 interface TicketFormData {
@@ -36,7 +35,6 @@ interface TicketFormData {
   source: 'call' | 'whatsapp' | 'manual';
   customer: string;
   customerPhone: string;
-  n8nWebhook: string;
 }
 
 interface TicketFormDialogProps {
@@ -64,8 +62,7 @@ export const TicketFormDialog: React.FC<TicketFormDialogProps> = ({
       category: ticket.category,
       source: ticket.source,
       customer: ticket.customer,
-      customerPhone: ticket.customerPhone,
-      n8nWebhook: ticket.n8nWebhook || ''
+      customerPhone: ticket.customerPhone
     } : {
       title: '',
       description: '',
@@ -76,8 +73,7 @@ export const TicketFormDialog: React.FC<TicketFormDialogProps> = ({
       category: '',
       source: 'manual',
       customer: '',
-      customerPhone: '',
-      n8nWebhook: ''
+      customerPhone: ''
     }
   });
 
@@ -226,14 +222,6 @@ export const TicketFormDialog: React.FC<TicketFormDialogProps> = ({
               />
             </div>
 
-            <div className="col-span-2">
-              <Label htmlFor="n8nWebhook">Webhook n8n (opcional)</Label>
-              <Input
-                id="n8nWebhook"
-                {...register('n8nWebhook')}
-                placeholder="URL do webhook n8n"
-              />
-            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">

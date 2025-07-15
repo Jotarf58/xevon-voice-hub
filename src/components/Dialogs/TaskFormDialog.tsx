@@ -19,7 +19,6 @@ interface Task {
   category: string;
   dueDate: string;
   createdBy: string;
-  n8nWorkflow?: string;
 }
 
 interface TaskFormData {
@@ -31,7 +30,6 @@ interface TaskFormData {
   team: string;
   category: string;
   dueDate: string;
-  n8nWorkflow: string;
 }
 
 interface TaskFormDialogProps {
@@ -57,8 +55,7 @@ export const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
       assignee: task.assignee,
       team: task.team,
       category: task.category,
-      dueDate: task.dueDate,
-      n8nWorkflow: task.n8nWorkflow || ''
+      dueDate: task.dueDate
     } : {
       title: '',
       description: '',
@@ -67,8 +64,7 @@ export const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
       assignee: '',
       team: user?.team || '',
       category: '',
-      dueDate: '',
-      n8nWorkflow: ''
+      dueDate: ''
     }
   });
 
@@ -191,14 +187,6 @@ export const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
               />
             </div>
 
-            <div className="col-span-2">
-              <Label htmlFor="n8nWorkflow">Workflow n8n (opcional)</Label>
-              <Input
-                id="n8nWorkflow"
-                {...register('n8nWorkflow')}
-                placeholder="Nome do workflow n8n"
-              />
-            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">

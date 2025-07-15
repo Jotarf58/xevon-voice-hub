@@ -47,7 +47,6 @@ interface TicketType {
   customerPhone: string;
   createdAt: string;
   updatedAt: string;
-  n8nWebhook?: string;
 }
 
 export const TicketsPage: React.FC = () => {
@@ -63,7 +62,7 @@ export const TicketsPage: React.FC = () => {
   const [tickets, setTickets] = useState<TicketType[]>([
     {
       id: 'tick-001',
-      title: 'Configuração N8N não funciona',
+      title: 'Configuração de automação não funciona',
       description: 'Cliente reporta que a automação criada não está a funcionar corretamente',
       status: 'open',
       priority: 'high',
@@ -74,8 +73,7 @@ export const TicketsPage: React.FC = () => {
       customer: 'António Costa',
       customerPhone: '+351 912 345 678',
       createdAt: '2024-01-13T10:30:00Z',
-      updatedAt: '2024-01-13T10:30:00Z',
-      n8nWebhook: 'https://hooks.xevon.com/webhook/n8n-config'
+      updatedAt: '2024-01-13T10:30:00Z'
     },
     {
       id: 'tick-002',
@@ -409,11 +407,6 @@ export const TicketsPage: React.FC = () => {
                     <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
                       📂 {ticket.category}
                     </Badge>
-                    {ticket.n8nWebhook && (
-                      <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
-                        🔗 N8N Webhook
-                      </Badge>
-                    )}
                   </div>
                 </div>
                 

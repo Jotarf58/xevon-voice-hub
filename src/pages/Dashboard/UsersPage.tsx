@@ -202,7 +202,7 @@ export const UsersPage: React.FC = () => {
     ));
   };
 
-  const canManageUsers = currentUser?.role === 'admin' || currentUser?.role === 'manager';
+  const canManageUsers = currentUser?.role === 'developer' || currentUser?.role === 'manager';
 
   return (
     <div className="p-6 space-y-6">
@@ -257,7 +257,7 @@ export const UsersPage: React.FC = () => {
                     <SelectContent>
                       <SelectItem value="user">Utilizador</SelectItem>
                       <SelectItem value="manager">Gestor</SelectItem>
-                      {currentUser?.role === 'admin' && (
+                      {currentUser?.role === 'developer' && (
                         <SelectItem value="admin">Administrador</SelectItem>
                       )}
                     </SelectContent>
@@ -474,7 +474,7 @@ export const UsersPage: React.FC = () => {
                             </>
                           )}
                         </DropdownMenuItem>
-                        {currentUser?.role === 'admin' && (
+                        {currentUser?.role === 'developer' && (
                           <DropdownMenuItem 
                             onClick={() => handleDeleteUser(user.id)}
                             className="text-red-600"

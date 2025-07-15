@@ -1,57 +1,50 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Settings, 
-  Webhook,
+  Settings,
+  Workflow,
   Palette,
-  Server,
   Shield,
-  Save,
-  TestTube,
+  Server,
   CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Moon,
-  Sun,
-  Monitor
+  AlertCircle,
+  XCircle
 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from "sonner";
+import { useToast } from '@/hooks/use-toast';
 
 interface N8NConfig {
-  baseUrl: string;
+  url: string;
   apiKey: string;
-  webhookUrl: string;
   status: 'connected' | 'disconnected' | 'error';
-  lastSync: string;
 }
 
 interface ThemeConfig {
-  mode: 'light' | 'dark' | 'system';
   primaryColor: string;
-  accentColor: string;
+  darkMode: boolean;
+  compactMode: boolean;
 }
 
 export const SettingsPage: React.FC = () => {
   const { user } = useAuth();
-  
-  // Only admins can access settings
-  if (user?.role !== 'admin') {
+  const { toast } = useToast();
+
+  // Redirect if not admin
+  if (user?.role !== 'developer') {
     return (
       <div className="p-6">
         <Card className="border-2">
           <CardContent className="p-12 text-center">
-            <Shield className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Acesso Negado</h3>
             <p className="text-muted-foreground">
-              Apenas administradores podem aceder às configurações do sistema.
+              Apenas utilizadores com cargo "Admin" podem aceder às configurações.
             </p>
           </CardContent>
         </Card>
@@ -60,231 +53,191 @@ export const SettingsPage: React.FC = () => {
   }
 
   const [n8nConfig, setN8nConfig] = useState<N8NConfig>({
-    baseUrl: 'https://n8n.xevon.com',
+    url: 'https://n8n.example.com',
     apiKey: '',
-    webhookUrl: 'https://hooks.xevon.com/webhook/n8n',
-    status: 'connected',
-    lastSync: '2024-01-13T12:00:00Z'
+    status: 'disconnected'
   });
 
   const [themeConfig, setThemeConfig] = useState<ThemeConfig>({
-    mode: 'system',
     primaryColor: '#3b82f6',
-    accentColor: '#8b5cf6'
+    darkMode: false,
+    compactMode: false
   });
 
-  const [webhooks, setWebhooks] = useState([
-    {
-      id: 'wh-001',
-      name: 'Tickets Webhook',
-      url: 'https://hooks.xevon.com/webhook/tickets',
-      events: ['ticket.created', 'ticket.updated', 'ticket.resolved'],
-      active: true
-    },
-    {
-      id: 'wh-002',
-      name: 'Calls Webhook',
-      url: 'https://hooks.xevon.com/webhook/calls',
-      events: ['call.started', 'call.ended', 'call.failed'],
-      active: true
-    },
-    {
-      id: 'wh-003',
-      name: 'Messages Webhook',
-      url: 'https://hooks.xevon.com/webhook/messages',
-      events: ['message.received', 'message.sent', 'message.failed'],
-      active: true
-    }
+  const [webhooks] = useState([
+    { name: 'Twilio Webhook', url: '/api/twilio', status: 'active' },
+    { name: 'WhatsApp Webhook', url: '/api/whatsapp', status: 'active' },
+    { name: 'ElevenLabs Webhook', url: '/api/elevenlabs', status: 'inactive' }
   ]);
 
   const [systemSettings, setSystemSettings] = useState({
-    autoCreateTickets: true,
-    aiAutoResponse: true,
-    notificationEmails: true,
-    logRetentionDays: 30,
-    maxConcurrentCalls: 10,
-    enableBackup: true
+    autoBackup: true,
+    maintenanceMode: false,
+    debugMode: false,
+    logLevel: 'info'
   });
 
   const handleTestN8NConnection = async () => {
-    toast.loading("A testar ligação ao N8N...");
-    
-    // Simulate API call
-    setTimeout(() => {
-      const success = Math.random() > 0.3; // 70% success rate for demo
-      
-      if (success) {
-        setN8nConfig({
-          ...n8nConfig,
-          status: 'connected',
-          lastSync: new Date().toISOString()
-        });
-        toast.success("Ligação ao N8N estabelecida com sucesso!");
-      } else {
-        setN8nConfig({
-          ...n8nConfig,
-          status: 'error'
-        });
-        toast.error("Erro ao conectar com o N8N. Verifique as configurações.");
-      }
-    }, 2000);
+    setN8nConfig(prev => ({ ...prev, status: 'connected' }));
+    toast({
+      title: "Conexão testada",
+      description: "Ligação ao n8n estabelecida com sucesso.",
+    });
   };
 
   const handleSaveN8NConfig = () => {
-    // Simulate save
-    toast.success("Configurações N8N guardadas com sucesso!");
+    toast({
+      title: "Configurações salvas",
+      description: "As configurações do n8n foram salvas com sucesso.",
+    });
   };
 
   const handleSaveTheme = () => {
     // Apply theme changes
-    document.documentElement.setAttribute('data-theme', themeConfig.mode);
-    toast.success("Configurações de tema guardadas!");
+    toast({
+      title: "Tema aplicado",
+      description: "As configurações de tema foram aplicadas.",
+    });
   };
 
   const handleSaveSystemSettings = () => {
-    toast.success("Configurações do sistema guardadas!");
+    toast({
+      title: "Configurações do sistema",
+      description: "As configurações do sistema foram salvas.",
+    });
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'connected': return 'text-green-600 bg-green-50 border-green-200';
-      case 'disconnected': return 'text-gray-600 bg-gray-50 border-gray-200';
-      case 'error': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'connected':
+      case 'active': return 'bg-green-500';
+      case 'disconnected':
+      case 'inactive': return 'bg-gray-500';
+      case 'error': return 'bg-red-500';
+      default: return 'bg-gray-500';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'connected': return <CheckCircle className="h-4 w-4" />;
-      case 'disconnected': return <XCircle className="h-4 w-4" />;
-      case 'error': return <AlertTriangle className="h-4 w-4" />;
-      default: return <XCircle className="h-4 w-4" />;
+      case 'connected':
+      case 'active': return <CheckCircle className="h-4 w-4" />;
+      case 'disconnected':
+      case 'inactive': return <AlertCircle className="h-4 w-4" />;
+      case 'error': return <XCircle className="h-4 w-4" />;
+      default: return <AlertCircle className="h-4 w-4" />;
     }
   };
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Configurações</h1>
-        <p className="text-muted-foreground mt-1">
-          Configurar integrações, tema e definições do sistema
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Configurações</h1>
+          <p className="text-muted-foreground mt-1">
+            Gerencie as configurações do sistema e integrações
+          </p>
+        </div>
+        <Badge variant="outline" className="text-sm px-3 py-1">
+          Admin Access
+        </Badge>
       </div>
 
       <Tabs defaultValue="n8n" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="n8n">N8N & Webhooks</TabsTrigger>
-          <TabsTrigger value="theme">Tema</TabsTrigger>
-          <TabsTrigger value="system">Sistema</TabsTrigger>
-          <TabsTrigger value="security">Segurança</TabsTrigger>
+          <TabsTrigger value="n8n" className="flex items-center gap-2">
+            <Workflow className="h-4 w-4" />
+            N8N
+          </TabsTrigger>
+          <TabsTrigger value="theme" className="flex items-center gap-2">
+            <Palette className="h-4 w-4" />
+            Tema
+          </TabsTrigger>
+          <TabsTrigger value="system" className="flex items-center gap-2">
+            <Server className="h-4 w-4" />
+            Sistema
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Segurança
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="n8n" className="space-y-6">
-          {/* N8N Connection Status */}
           <Card className="border-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Server className="h-5 w-5" />
-                Estado da Ligação N8N
+                <Workflow className="h-5 w-5" />
+                Configuração N8N
               </CardTitle>
+              <CardDescription>
+                Configure a conexão com o seu servidor N8N para automação de workflows
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 mb-4">
+                <div className={`w-3 h-3 rounded-full ${getStatusColor(n8nConfig.status)}`} />
+                <span className="text-sm font-medium">Status: </span>
+                <Badge variant="outline" className="flex items-center gap-1">
                   {getStatusIcon(n8nConfig.status)}
-                  <div>
-                    <p className="font-medium text-foreground">
-                      {n8nConfig.status === 'connected' ? 'Conectado' : 
-                       n8nConfig.status === 'error' ? 'Erro de Ligação' : 'Desconectado'}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Última sincronização: {new Date(n8nConfig.lastSync).toLocaleString('pt-BR')}
-                    </p>
-                  </div>
-                </div>
-                <Badge className={`border ${getStatusColor(n8nConfig.status)}`}>
-                  {n8nConfig.status.toUpperCase()}
+                  {n8nConfig.status === 'connected' ? 'Conectado' : 
+                   n8nConfig.status === 'error' ? 'Erro' : 'Desconectado'}
                 </Badge>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="n8n-url">URL Base do N8N</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="n8n-url">URL do N8N</Label>
                   <Input
                     id="n8n-url"
-                    value={n8nConfig.baseUrl}
-                    onChange={(e) => setN8nConfig({...n8nConfig, baseUrl: e.target.value})}
-                    placeholder="https://n8n.xevon.com"
+                    value={n8nConfig.url}
+                    onChange={(e) => setN8nConfig(prev => ({ ...prev, url: e.target.value }))}
+                    placeholder="https://n8n.exemplo.com"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="n8n-api-key">Chave API</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="n8n-api-key">API Key</Label>
                   <Input
                     id="n8n-api-key"
                     type="password"
                     value={n8nConfig.apiKey}
-                    onChange={(e) => setN8nConfig({...n8nConfig, apiKey: e.target.value})}
-                    placeholder="n8n_api_key_..."
+                    onChange={(e) => setN8nConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                    placeholder="Sua API Key do N8N"
                   />
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="webhook-url">URL do Webhook</Label>
-                <Input
-                  id="webhook-url"
-                  value={n8nConfig.webhookUrl}
-                  onChange={(e) => setN8nConfig({...n8nConfig, webhookUrl: e.target.value})}
-                  placeholder="https://hooks.xevon.com/webhook/n8n"
-                />
-              </div>
-
               <div className="flex gap-2">
                 <Button onClick={handleTestN8NConnection} variant="outline">
-                  <TestTube className="mr-2 h-4 w-4" />
-                  Testar Ligação
+                  Testar Conexão
                 </Button>
-                <Button onClick={handleSaveN8NConfig}>
-                  <Save className="mr-2 h-4 w-4" />
-                  Guardar Configurações
+                <Button onClick={handleSaveN8NConfig} className="bg-gradient-primary">
+                  Salvar Configurações
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Webhooks Configuration */}
           <Card className="border-2">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Webhook className="h-5 w-5" />
-                Configuração de Webhooks
-              </CardTitle>
+              <CardTitle>Webhooks Ativos</CardTitle>
+              <CardDescription>Status dos webhooks configurados no sistema</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {webhooks.map((webhook) => (
-                  <div key={webhook.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-foreground">{webhook.name}</h4>
-                      <p className="text-sm text-muted-foreground">{webhook.url}</p>
-                      <div className="flex gap-1 mt-2">
-                        {webhook.events.map((event) => (
-                          <Badge key={event} variant="outline" className="text-xs">
-                            {event}
-                          </Badge>
-                        ))}
+              <div className="space-y-3">
+                {webhooks.map((webhook, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 border border-border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-3 h-3 rounded-full ${getStatusColor(webhook.status)}`} />
+                      <div>
+                        <h4 className="font-medium text-foreground">{webhook.name}</h4>
+                        <p className="text-sm text-muted-foreground">{webhook.url}</p>
                       </div>
                     </div>
-                    <Switch
-                      checked={webhook.active}
-                      onCheckedChange={(checked) => 
-                        setWebhooks(webhooks.map(w => 
-                          w.id === webhook.id ? {...w, active: checked} : w
-                        ))
-                      }
-                    />
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      {getStatusIcon(webhook.status)}
+                      {webhook.status === 'active' ? 'Ativo' : 'Inativo'}
+                    </Badge>
                   </div>
                 ))}
               </div>
@@ -297,81 +250,54 @@ export const SettingsPage: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Palette className="h-5 w-5" />
-                Configurações de Tema
+                Personalização do Tema
               </CardTitle>
+              <CardDescription>
+                Personalize a aparência do sistema
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <Label className="text-base font-medium">Modo de Tema</Label>
-                <div className="grid grid-cols-3 gap-4 mt-2">
-                  <Button
-                    variant={themeConfig.mode === 'light' ? 'default' : 'outline'}
-                    onClick={() => setThemeConfig({...themeConfig, mode: 'light'})}
-                    className="flex items-center gap-2"
-                  >
-                    <Sun className="h-4 w-4" />
-                    Claro
-                  </Button>
-                  <Button
-                    variant={themeConfig.mode === 'dark' ? 'default' : 'outline'}
-                    onClick={() => setThemeConfig({...themeConfig, mode: 'dark'})}
-                    className="flex items-center gap-2"
-                  >
-                    <Moon className="h-4 w-4" />
-                    Escuro
-                  </Button>
-                  <Button
-                    variant={themeConfig.mode === 'system' ? 'default' : 'outline'}
-                    onClick={() => setThemeConfig({...themeConfig, mode: 'system'})}
-                    className="flex items-center gap-2"
-                  >
-                    <Monitor className="h-4 w-4" />
-                    Sistema
-                  </Button>
-                </div>
-              </div>
-
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="primary-color">Cor Primária</Label>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-2">
                     <Input
                       id="primary-color"
                       type="color"
                       value={themeConfig.primaryColor}
-                      onChange={(e) => setThemeConfig({...themeConfig, primaryColor: e.target.value})}
+                      onChange={(e) => setThemeConfig(prev => ({ ...prev, primaryColor: e.target.value }))}
                       className="w-16 h-10"
                     />
                     <Input
                       value={themeConfig.primaryColor}
-                      onChange={(e) => setThemeConfig({...themeConfig, primaryColor: e.target.value})}
+                      onChange={(e) => setThemeConfig(prev => ({ ...prev, primaryColor: e.target.value }))}
                       placeholder="#3b82f6"
                       className="flex-1"
                     />
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="accent-color">Cor de Destaque</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      id="accent-color"
-                      type="color"
-                      value={themeConfig.accentColor}
-                      onChange={(e) => setThemeConfig({...themeConfig, accentColor: e.target.value})}
-                      className="w-16 h-10"
-                    />
-                    <Input
-                      value={themeConfig.accentColor}
-                      onChange={(e) => setThemeConfig({...themeConfig, accentColor: e.target.value})}
-                      placeholder="#8b5cf6"
-                      className="flex-1"
-                    />
-                  </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="dark-mode">Modo Escuro</Label>
+                  <Switch
+                    id="dark-mode"
+                    checked={themeConfig.darkMode}
+                    onCheckedChange={(checked) => setThemeConfig(prev => ({ ...prev, darkMode: checked }))}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="compact-mode">Modo Compacto</Label>
+                  <Switch
+                    id="compact-mode"
+                    checked={themeConfig.compactMode}
+                    onCheckedChange={(checked) => setThemeConfig(prev => ({ ...prev, compactMode: checked }))}
+                  />
                 </div>
               </div>
 
-              <Button onClick={handleSaveTheme}>
-                <Save className="mr-2 h-4 w-4" />
+              <Button onClick={handleSaveTheme} className="bg-gradient-primary">
                 Aplicar Tema
               </Button>
             </CardContent>
@@ -382,105 +308,52 @@ export const SettingsPage: React.FC = () => {
           <Card className="border-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
+                <Server className="h-5 w-5" />
                 Configurações do Sistema
               </CardTitle>
+              <CardDescription>
+                Gerencie configurações avançadas do sistema
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="text-base font-medium">Criar Tickets Automaticamente</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Criar tickets automaticamente a partir de chamadas e mensagens
-                    </p>
+                    <Label htmlFor="auto-backup">Backup Automático</Label>
+                    <p className="text-sm text-muted-foreground">Realizar backup diário dos dados</p>
                   </div>
                   <Switch
-                    checked={systemSettings.autoCreateTickets}
-                    onCheckedChange={(checked) => 
-                      setSystemSettings({...systemSettings, autoCreateTickets: checked})
-                    }
+                    id="auto-backup"
+                    checked={systemSettings.autoBackup}
+                    onCheckedChange={(checked) => setSystemSettings(prev => ({ ...prev, autoBackup: checked }))}
                   />
                 </div>
-
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="text-base font-medium">Resposta Automática IA</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Permitir que a IA responda automaticamente a mensagens simples
-                    </p>
+                    <Label htmlFor="maintenance-mode">Modo de Manutenção</Label>
+                    <p className="text-sm text-muted-foreground">Bloquear acesso de utilizadores</p>
                   </div>
                   <Switch
-                    checked={systemSettings.aiAutoResponse}
-                    onCheckedChange={(checked) => 
-                      setSystemSettings({...systemSettings, aiAutoResponse: checked})
-                    }
+                    id="maintenance-mode"
+                    checked={systemSettings.maintenanceMode}
+                    onCheckedChange={(checked) => setSystemSettings(prev => ({ ...prev, maintenanceMode: checked }))}
                   />
                 </div>
-
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="text-base font-medium">Emails de Notificação</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Enviar emails de notificação para eventos importantes
-                    </p>
+                    <Label htmlFor="debug-mode">Modo Debug</Label>
+                    <p className="text-sm text-muted-foreground">Ativar logs detalhados</p>
                   </div>
                   <Switch
-                    checked={systemSettings.notificationEmails}
-                    onCheckedChange={(checked) => 
-                      setSystemSettings({...systemSettings, notificationEmails: checked})
-                    }
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-base font-medium">Backup Automático</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Realizar backup automático dos dados diariamente
-                    </p>
-                  </div>
-                  <Switch
-                    checked={systemSettings.enableBackup}
-                    onCheckedChange={(checked) => 
-                      setSystemSettings({...systemSettings, enableBackup: checked})
-                    }
+                    id="debug-mode"
+                    checked={systemSettings.debugMode}
+                    onCheckedChange={(checked) => setSystemSettings(prev => ({ ...prev, debugMode: checked }))}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="log-retention">Retenção de Logs (dias)</Label>
-                  <Input
-                    id="log-retention"
-                    type="number"
-                    value={systemSettings.logRetentionDays}
-                    onChange={(e) => 
-                      setSystemSettings({...systemSettings, logRetentionDays: parseInt(e.target.value)})
-                    }
-                    min="1"
-                    max="365"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="max-calls">Máximo de Chamadas Simultâneas</Label>
-                  <Input
-                    id="max-calls"
-                    type="number"
-                    value={systemSettings.maxConcurrentCalls}
-                    onChange={(e) => 
-                      setSystemSettings({...systemSettings, maxConcurrentCalls: parseInt(e.target.value)})
-                    }
-                    min="1"
-                    max="100"
-                  />
-                </div>
-              </div>
-
-              <Button onClick={handleSaveSystemSettings}>
-                <Save className="mr-2 h-4 w-4" />
-                Guardar Configurações
+              <Button onClick={handleSaveSystemSettings} className="bg-gradient-primary">
+                Salvar Configurações
               </Button>
             </CardContent>
           </Card>
@@ -493,53 +366,38 @@ export const SettingsPage: React.FC = () => {
                 <Shield className="h-5 w-5" />
                 Configurações de Segurança
               </CardTitle>
+              <CardDescription>
+                Gerencie as configurações de segurança do sistema
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-yellow-800">Configurações de Segurança</p>
-                    <p className="text-sm text-yellow-700 mt-1">
-                      Estas configurações afetam a segurança de todo o sistema. 
-                      Altere apenas se souber o que está a fazer.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
+            <CardContent>
               <div className="space-y-4">
-                <div>
-                  <Label>Chaves API Ativas</Label>
-                  <div className="mt-2 space-y-2">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">Twilio API Key</p>
-                        <p className="text-sm text-muted-foreground">Para chamadas de voz</p>
-                      </div>
-                      <Badge variant="outline" className="text-green-600 border-green-200">
-                        Ativa
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">ElevenLabs API Key</p>
-                        <p className="text-sm text-muted-foreground">Para síntese de voz</p>
-                      </div>
-                      <Badge variant="outline" className="text-green-600 border-green-200">
-                        Ativa
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">WhatsApp Business API</p>
-                        <p className="text-sm text-muted-foreground">Para mensagens WhatsApp</p>
-                      </div>
-                      <Badge variant="outline" className="text-green-600 border-green-200">
-                        Ativa
-                      </Badge>
-                    </div>
-                  </div>
+                <div className="p-4 border border-border rounded-lg bg-muted/30">
+                  <h4 className="font-medium text-foreground mb-2">Gestão de Utilizadores</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Configure políticas de acesso e permissões
+                  </p>
+                  <Button variant="outline" size="sm">
+                    Gerir Utilizadores
+                  </Button>
+                </div>
+                <div className="p-4 border border-border rounded-lg bg-muted/30">
+                  <h4 className="font-medium text-foreground mb-2">Logs de Auditoria</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Visualizar logs de atividades do sistema
+                  </p>
+                  <Button variant="outline" size="sm">
+                    Ver Logs
+                  </Button>
+                </div>
+                <div className="p-4 border border-border rounded-lg bg-muted/30">
+                  <h4 className="font-medium text-foreground mb-2">Backup e Restauro</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Gerir backups e restaurar dados
+                  </p>
+                  <Button variant="outline" size="sm">
+                    Gerir Backups
+                  </Button>
                 </div>
               </div>
             </CardContent>

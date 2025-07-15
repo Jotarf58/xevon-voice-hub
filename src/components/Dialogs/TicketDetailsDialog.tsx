@@ -19,7 +19,6 @@ interface TicketType {
   customerPhone: string;
   createdAt: string;
   updatedAt: string;
-  n8nWebhook?: string;
 }
 
 interface TicketDetailsDialogProps {
@@ -168,15 +167,6 @@ export const TicketDetailsDialog: React.FC<TicketDetailsDialogProps> = ({
             </div>
           </div>
 
-          {ticket.n8nWebhook && (
-            <>
-              <Separator />
-              <div>
-                <p className="text-sm font-medium">Webhook n8n</p>
-                <p className="text-sm text-muted-foreground font-mono">{ticket.n8nWebhook}</p>
-              </div>
-            </>
-          )}
 
           <Separator />
 
