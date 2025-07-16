@@ -11,14 +11,17 @@ import { useAuth } from '@/contexts/AuthContext';
 interface Task {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   status: 'pending' | 'in_progress' | 'completed';
   priority: 'low' | 'medium' | 'high';
-  assignee: string;
-  team: string;
+  assignee_id: string | null;
+  created_by: string;
+  team: 'technical' | 'support' | 'sales' | 'management';
   category: string;
-  dueDate: string;
-  createdBy: string;
+  due_date: string | null;
+  created_at: string;
+  updated_at: string;
+  archived: boolean;
 }
 
 interface TaskFormData {
@@ -26,10 +29,9 @@ interface TaskFormData {
   description: string;
   status: 'pending' | 'in_progress' | 'completed';
   priority: 'low' | 'medium' | 'high';
-  assignee: string;
-  team: string;
+  team: 'technical' | 'support' | 'sales' | 'management';
   category: string;
-  dueDate: string;
+  due_date: string;
 }
 
 interface TaskFormDialogProps {
@@ -49,22 +51,20 @@ export const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
   const { register, handleSubmit, setValue, watch, reset } = useForm<TaskFormData>({
     defaultValues: task ? {
       title: task.title,
-      description: task.description,
+      description: task.description || '',
       status: task.status,
       priority: task.priority,
-      assignee: task.assignee,
       team: task.team,
       category: task.category,
-      dueDate: task.dueDate
+      due_date: task.due_date ? task.due_date.split('T')[0] : ''
     } : {
       title: '',
       description: '',
-      status: 'pending',
-      priority: 'medium',
-      assignee: '',
-      team: user?.team || '',
+      status: 'pending' as const,
+      priority: 'medium' as const,
+      team: (user?.team as 'technical' | 'support' | 'sales' | 'management') || 'support',
       category: '',
-      dueDate: ''
+      due_date: ''
     }
   });
 
@@ -141,17 +141,8 @@ export const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
             </div>
 
             <div>
-              <Label htmlFor="assignee">Responsável</Label>
-              <Input
-                id="assignee"
-                {...register('assignee', { required: true })}
-                placeholder="Nome do responsável"
-              />
-            </div>
-
-            <div>
               <Label htmlFor="team">Equipa</Label>
-              <Select value={team} onValueChange={(value) => setValue('team', value)}>
+              <Select value={team} onValueChange={(value) => setValue('team', value as any)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a equipa" />
                 </SelectTrigger>
@@ -180,11 +171,11 @@ export const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
             </div>
 
             <div>
-              <Label htmlFor="dueDate">Data de Vencimento</Label>
+              <Label htmlFor="due_date">Data de Vencimento</Label>
               <Input
-                id="dueDate"
+                id="due_date"
                 type="date"
-                {...register('dueDate', { required: true })}
+                {...register('due_date', { required: true })}
               />
             </div>
 

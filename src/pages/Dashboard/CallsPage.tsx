@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useCalls } from '@/hooks/useSupabaseData';
+import { useCalls, useCallOperations } from '@/hooks/useSupabaseData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,9 @@ import {
   Play,
   MoreHorizontal,
   FileText,
-  ArrowUpRight
+  ArrowUpRight,
+  Plus,
+  Edit
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,6 +30,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CallFormDialog } from '@/components/Dialogs/CallFormDialog';
+import { CallDetailsDialog } from '@/components/Dialogs/CallDetailsDialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface CallRecord {
   id: string;
@@ -46,9 +51,58 @@ interface CallRecord {
 export const CallsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedCall, setSelectedCall] = useState<any>(null);
 
   // Real data from database
-  const { calls, loading, error } = useCalls();
+  const { calls, loading, error, refetch } = useCalls();
+  const { createCall, updateCall } = useCallOperations();
+  const { toast } = useToast();
+
+  // Handlers
+  const handleCreateCall = () => {
+    setSelectedCall(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditCall = (call: any) => {
+    setSelectedCall(call);
+    setIsFormOpen(true);
+  };
+
+  const handleViewCall = (call: any) => {
+    setSelectedCall(call);
+    setIsDetailsOpen(true);
+  };
+
+  const handleSaveCall = async (callData: any) => {
+    try {
+      if (selectedCall) {
+        await updateCall(selectedCall.id, callData);
+        toast({
+          title: "Sucesso",
+          description: "Chamada atualizada com sucesso!",
+        });
+      } else {
+        await createCall(callData);
+        toast({
+          title: "Sucesso",
+          description: "Chamada criada com sucesso!",
+        });
+      }
+      refetch();
+      setSelectedCall(null);
+      setIsFormOpen(false);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao guardar chamada",
+        variant: "destructive",
+      });
+    }
+  };
+  
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -106,6 +160,10 @@ export const CallsPage: React.FC = () => {
             Monitore chamadas em tempo real e histórico de conversas
           </p>
         </div>
+        <Button onClick={handleCreateCall} className="bg-gradient-primary hover:bg-gradient-primary/90">
+          <Plus className="mr-2 h-4 w-4" />
+          Nova Chamada
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -269,12 +327,16 @@ export const CallsPage: React.FC = () => {
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Ver Detalhes
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
+                   <DropdownMenuContent align="end">
+                     <DropdownMenuItem onClick={() => handleViewCall(call)}>
+                       <FileText className="mr-2 h-4 w-4" />
+                       Ver Detalhes
+                     </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => handleEditCall(call)}>
+                       <Edit className="mr-2 h-4 w-4" />
+                       Editar
+                     </DropdownMenuItem>
+                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
             </CardContent>
@@ -296,6 +358,21 @@ export const CallsPage: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Diálogos */}
+      <CallFormDialog
+        call={selectedCall}
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        onSave={handleSaveCall}
+      />
+
+      <CallDetailsDialog
+        call={selectedCall}
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        onEdit={handleEditCall}
+      />
     </div>
   );
 };

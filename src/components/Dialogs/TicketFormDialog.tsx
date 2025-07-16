@@ -11,30 +11,26 @@ import { useAuth } from '@/contexts/AuthContext';
 interface TicketType {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
+  type: 'bug' | 'feature_request' | 'support' | 'integration' | 'configuration';
   status: 'open' | 'in_progress' | 'proposed_solution' | 'closed';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  assignee: string;
-  team: string;
-  category: string;
-  source: 'call' | 'whatsapp' | 'manual';
-  customer: string;
-  customerPhone: string;
-  createdAt: string;
-  updatedAt: string;
+  priority: 'low' | 'medium' | 'high';
+  assignee_id: string | null;
+  reporter_id: string;
+  team: 'technical' | 'support' | 'sales' | 'management';
+  resolution: string | null;
+  resolved_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface TicketFormData {
   title: string;
   description: string;
+  type: 'bug' | 'feature_request' | 'support' | 'integration' | 'configuration';
   status: 'open' | 'in_progress' | 'proposed_solution' | 'closed';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  assignee: string;
-  team: string;
-  category: string;
-  source: 'call' | 'whatsapp' | 'manual';
-  customer: string;
-  customerPhone: string;
+  priority: 'low' | 'medium' | 'high';
+  team: 'technical' | 'support' | 'sales' | 'management';
 }
 
 interface TicketFormDialogProps {
@@ -54,34 +50,25 @@ export const TicketFormDialog: React.FC<TicketFormDialogProps> = ({
   const { register, handleSubmit, setValue, watch, reset } = useForm<TicketFormData>({
     defaultValues: ticket ? {
       title: ticket.title,
-      description: ticket.description,
+      description: ticket.description || '',
+      type: ticket.type,
       status: ticket.status,
       priority: ticket.priority,
-      assignee: ticket.assignee,
-      team: ticket.team,
-      category: ticket.category,
-      source: ticket.source,
-      customer: ticket.customer,
-      customerPhone: ticket.customerPhone
+      team: ticket.team
     } : {
       title: '',
       description: '',
-      status: 'open',
-      priority: 'medium',
-      assignee: user?.name || '',
-      team: user?.team || '',
-      category: '',
-      source: 'manual',
-      customer: '',
-      customerPhone: ''
+      type: 'support' as const,
+      status: 'open' as const,
+      priority: 'medium' as const,
+      team: (user?.team as 'technical' | 'support' | 'sales' | 'management') || 'support'
     }
   });
 
   const status = watch('status');
   const priority = watch('priority');
   const team = watch('team');
-  const category = watch('category');
-  const source = watch('source');
+  const type = watch('type');
 
   const onSubmit = (data: TicketFormData) => {
     onSave(data);
@@ -138,6 +125,22 @@ export const TicketFormDialog: React.FC<TicketFormDialogProps> = ({
             </div>
 
             <div>
+              <Label htmlFor="type">Tipo</Label>
+              <Select value={type} onValueChange={(value) => setValue('type', value as any)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bug">Bug</SelectItem>
+                  <SelectItem value="feature_request">Pedido de Funcionalidade</SelectItem>
+                  <SelectItem value="support">Suporte</SelectItem>
+                  <SelectItem value="integration">Integração</SelectItem>
+                  <SelectItem value="configuration">Configuração</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
               <Label htmlFor="priority">Prioridade</Label>
               <Select value={priority} onValueChange={(value) => setValue('priority', value as any)}>
                 <SelectTrigger>
@@ -147,37 +150,13 @@ export const TicketFormDialog: React.FC<TicketFormDialogProps> = ({
                   <SelectItem value="low">Baixa</SelectItem>
                   <SelectItem value="medium">Média</SelectItem>
                   <SelectItem value="high">Alta</SelectItem>
-                  <SelectItem value="urgent">Urgente</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="source">Origem</Label>
-              <Select value={source} onValueChange={(value) => setValue('source', value as any)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a origem" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="call">Chamada</SelectItem>
-                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                  <SelectItem value="manual">Manual</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="assignee">Responsável</Label>
-              <Input
-                id="assignee"
-                {...register('assignee', { required: true })}
-                placeholder="Nome do responsável"
-              />
             </div>
 
             <div>
               <Label htmlFor="team">Equipa</Label>
-              <Select value={team} onValueChange={(value) => setValue('team', value)}>
+              <Select value={team} onValueChange={(value) => setValue('team', value as any)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a equipa" />
                 </SelectTrigger>
@@ -188,39 +167,6 @@ export const TicketFormDialog: React.FC<TicketFormDialogProps> = ({
                   <SelectItem value="management">Management</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="category">Categoria</Label>
-              <Select value={category} onValueChange={(value) => setValue('category', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Technical">Técnico</SelectItem>
-                  <SelectItem value="Billing">Facturação</SelectItem>
-                  <SelectItem value="General">Geral</SelectItem>
-                  <SelectItem value="Integration">Integração</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="customer">Cliente</Label>
-              <Input
-                id="customer"
-                {...register('customer', { required: true })}
-                placeholder="Nome do cliente"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="customerPhone">Telefone do Cliente</Label>
-              <Input
-                id="customerPhone"
-                {...register('customerPhone', { required: true })}
-                placeholder="+351 XXX XXX XXX"
-              />
             </div>
 
           </div>

@@ -317,7 +317,7 @@ export function useTaskOperations() {
         category: taskData.category,
         team: taskData.team,
         assignee_id: user.id,
-        due_date: taskData.dueDate,
+        due_date: taskData.due_date,
         created_by: user.id
       })
       .select()
@@ -339,7 +339,7 @@ export function useTaskOperations() {
         priority: taskData.priority,
         category: taskData.category,
         team: taskData.team,
-        due_date: taskData.dueDate,
+        due_date: taskData.due_date,
         updated_at: new Date().toISOString()
       })
       .eq('id', taskId)
@@ -394,10 +394,9 @@ export function useTicketOperations() {
         description: ticketData.description,
         status: ticketData.status,
         priority: ticketData.priority,
-        type: ticketData.source === 'call' ? 'support' : 'integration',
+        type: ticketData.type,
         team: ticketData.team,
-        reporter_id: user.id,
-        assignee_id: user.id
+        reporter_id: user.id
       })
       .select()
       .single();
@@ -416,6 +415,8 @@ export function useTicketOperations() {
         description: ticketData.description,
         status: ticketData.status,
         priority: ticketData.priority,
+        type: ticketData.type,
+        team: ticketData.team,
         updated_at: new Date().toISOString()
       })
       .eq('id', ticketId)
@@ -620,4 +621,131 @@ export function useArchivedTasks() {
   };
 
   return { tasks, loading, error, refetch };
+}
+
+// Hook para operações de chamadas
+export function useCallOperations() {
+  const { user } = useAuth();
+
+  const createCall = async (callData: any) => {
+    if (!user) throw new Error('Utilizador não autenticado');
+
+    const { data, error } = await supabase
+      .from('calls')
+      .insert({
+        caller_number: callData.caller_number,
+        receiver_number: callData.receiver_number,
+        status: callData.status,
+        duration: callData.duration,
+        notes: callData.notes,
+        handled_by: user.id
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  const updateCall = async (callId: string, callData: any) => {
+    if (!user) throw new Error('Utilizador não autenticado');
+
+    const { data, error } = await supabase
+      .from('calls')
+      .update({
+        caller_number: callData.caller_number,
+        receiver_number: callData.receiver_number,
+        status: callData.status,
+        duration: callData.duration,
+        notes: callData.notes,
+        ended_at: callData.status === 'completed' ? new Date().toISOString() : null
+      })
+      .eq('id', callId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  return { createCall, updateCall };
+}
+
+// Hook para operações de mensagens
+export function useMessageOperations() {
+  const { user } = useAuth();
+
+  const createMessage = async (messageData: any) => {
+    if (!user) throw new Error('Utilizador não autenticado');
+
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        sender_number: messageData.sender_number,
+        receiver_number: messageData.receiver_number,
+        content: messageData.content,
+        message_type: messageData.message_type,
+        status: messageData.status,
+        media_url: messageData.media_url || null,
+        processed_by: user.id
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  const updateMessage = async (messageId: string, messageData: any) => {
+    if (!user) throw new Error('Utilizador não autenticado');
+
+    const { data, error } = await supabase
+      .from('messages')
+      .update({
+        sender_number: messageData.sender_number,
+        receiver_number: messageData.receiver_number,
+        content: messageData.content,
+        message_type: messageData.message_type,
+        status: messageData.status,
+        media_url: messageData.media_url || null,
+        delivered_at: messageData.status === 'delivered' || messageData.status === 'read' ? new Date().toISOString() : null,
+        read_at: messageData.status === 'read' ? new Date().toISOString() : null
+      })
+      .eq('id', messageId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  return { createMessage, updateMessage };
+}
+
+// Hook para operações de utilizadores
+export function useUserOperations() {
+  const { user } = useAuth();
+
+  const updateUserProfile = async (userId: string, userData: any) => {
+    if (!user) throw new Error('Utilizador não autenticado');
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+        team: userData.team,
+        avatar_url: userData.avatar_url || null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  return { updateUserProfile };
 }
