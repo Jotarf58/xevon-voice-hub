@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Star } from '@/components/ui/star';
+
 import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -62,7 +62,11 @@ export const LoginPage: React.FC = () => {
         <Card className="border-2 shadow-card">
           <CardHeader className="text-center pb-8">
             <div className="flex justify-center mb-4">
-              <Star size={60} animated glowing />
+              <img 
+                src="/lovable-uploads/18bd00ac-7312-4fae-9241-d12230e20fe4.png" 
+                alt="Xevon Logo" 
+                className="w-16 h-16 object-contain animate-pulse" 
+              />
             </div>
             <CardTitle className="text-2xl font-bold text-foreground">
               Bem-vindo à Xevon
