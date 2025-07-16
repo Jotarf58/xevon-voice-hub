@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTasks } from '@/hooks/useSupabaseData';
+import { useTasks, useTaskOperations } from '@/hooks/useSupabaseData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,10 @@ import {
   Clock,
   User,
   Calendar,
-  MoreHorizontal
+  MoreHorizontal,
+  Edit,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -27,6 +30,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TaskFormDialog } from '@/components/Dialogs/TaskFormDialog';
+import { TaskDetailsDialog } from '@/components/Dialogs/TaskDetailsDialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface Task {
   id: string;
@@ -45,12 +51,75 @@ interface Task {
 
 export const TasksPage: React.FC = () => {
   const { user } = useAuth();
+  const { tasks, loading, error, refetch } = useTasks();
+  const { createTask, updateTask, completeTask } = useTaskOperations();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
 
-  // Real data from database
-  const { tasks, loading, error } = useTasks();
+  // Funções de manipulação
+  const handleCreateTask = () => {
+    setSelectedTask(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditTask = (task: any) => {
+    setSelectedTask(task);
+    setIsFormOpen(true);
+  };
+
+  const handleViewTask = (task: any) => {
+    setSelectedTask(task);
+    setIsDetailsOpen(true);
+  };
+
+  const handleSaveTask = async (taskData: any) => {
+    try {
+      if (selectedTask) {
+        await updateTask(selectedTask.id, taskData);
+        toast({
+          title: "Sucesso",
+          description: "Tarefa atualizada com sucesso!",
+        });
+      } else {
+        await createTask(taskData);
+        toast({
+          title: "Sucesso",
+          description: "Tarefa criada com sucesso!",
+        });
+      }
+      refetch();
+      setSelectedTask(null);
+      setIsFormOpen(false);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar tarefa. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCompleteTask = async (taskId: string) => {
+    try {
+      await completeTask(taskId);
+      toast({
+        title: "Sucesso",
+        description: "Tarefa marcada como concluída!",
+      });
+      refetch();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao completar tarefa. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -112,7 +181,10 @@ export const TasksPage: React.FC = () => {
             Gerencie suas tarefas e acompanhe o progresso da equipe
           </p>
         </div>
-        <Button className="bg-gradient-primary hover:bg-gradient-primary/90">
+        <Button 
+          className="bg-gradient-primary hover:bg-gradient-primary/90"
+          onClick={handleCreateTask}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Nova Tarefa
         </Button>
@@ -281,11 +353,22 @@ export const TasksPage: React.FC = () => {
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      Ver Detalhes
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
+                   <DropdownMenuContent align="end">
+                     <DropdownMenuItem onClick={() => handleViewTask(task)}>
+                       <CheckSquare className="mr-2 h-4 w-4" />
+                       Ver Detalhes
+                     </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => handleEditTask(task)}>
+                       <Edit className="mr-2 h-4 w-4" />
+                       Editar
+                     </DropdownMenuItem>
+                     {task.status !== 'completed' && (
+                       <DropdownMenuItem onClick={() => handleCompleteTask(task.id)}>
+                         <CheckCircle className="mr-2 h-4 w-4" />
+                         Marcar como Concluída
+                       </DropdownMenuItem>
+                     )}
+                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
             </CardContent>
@@ -307,6 +390,22 @@ export const TasksPage: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Diálogos */}
+      <TaskFormDialog
+        task={selectedTask}
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        onSave={handleSaveTask}
+      />
+
+      <TaskDetailsDialog
+        task={selectedTask}
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        onEdit={handleEditTask}
+        onDelete={() => {}} // Pode implementar depois se necessário
+      />
     </div>
   );
 };

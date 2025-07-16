@@ -273,6 +273,182 @@ export function useUsers() {
   return { users, loading, error, refetch };
 }
 
+// Hook para criar/atualizar tarefas
+export function useTaskOperations() {
+  const { user } = useAuth();
+
+  const createTask = async (taskData: any) => {
+    if (!user) throw new Error('Utilizador não autenticado');
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert({
+        title: taskData.title,
+        description: taskData.description,
+        status: taskData.status,
+        priority: taskData.priority,
+        category: taskData.category,
+        team: taskData.team,
+        assignee_id: user.id,
+        due_date: taskData.dueDate,
+        created_by: user.id
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  const updateTask = async (taskId: string, taskData: any) => {
+    if (!user) throw new Error('Utilizador não autenticado');
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({
+        title: taskData.title,
+        description: taskData.description,
+        status: taskData.status,
+        priority: taskData.priority,
+        category: taskData.category,
+        team: taskData.team,
+        due_date: taskData.dueDate,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', taskId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  const completeTask = async (taskId: string) => {
+    if (!user) throw new Error('Utilizador não autenticado');
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({ 
+        status: 'completed',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', taskId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  return { createTask, updateTask, completeTask };
+}
+
+// Hook para criar/atualizar tickets
+export function useTicketOperations() {
+  const { user } = useAuth();
+
+  const createTicket = async (ticketData: any) => {
+    if (!user) throw new Error('Utilizador não autenticado');
+
+    const { data, error } = await supabase
+      .from('tickets')
+      .insert({
+        title: ticketData.title,
+        description: ticketData.description,
+        status: ticketData.status,
+        priority: ticketData.priority,
+        type: ticketData.source === 'call' ? 'support' : 'integration',
+        team: ticketData.team,
+        reporter_id: user.id,
+        assignee_id: user.id
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  const updateTicket = async (ticketId: string, ticketData: any) => {
+    if (!user) throw new Error('Utilizador não autenticado');
+
+    const { data, error } = await supabase
+      .from('tickets')
+      .update({
+        title: ticketData.title,
+        description: ticketData.description,
+        status: ticketData.status,
+        priority: ticketData.priority,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', ticketId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  const closeTicket = async (ticketId: string, resolution: string) => {
+    if (!user) throw new Error('Utilizador não autenticado');
+
+    const { data, error } = await supabase
+      .from('tickets')
+      .update({ 
+        status: 'closed',
+        resolution: resolution,
+        resolved_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', ticketId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  return { createTicket, updateTicket, closeTicket };
+}
+
+// Hook para tickets recentes
+export function useRecentTickets() {
+  const [recentTickets, setRecentTickets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchRecentTickets = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('tickets')
+          .select(`
+            *,
+            assignee:profiles!tickets_assignee_id_fkey(name, email),
+            reporter:profiles!tickets_reporter_id_fkey(name, email)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (error) throw error;
+        setRecentTickets(data || []);
+      } catch (err) {
+        console.error('Erro ao carregar tickets recentes:', err);
+        setRecentTickets([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecentTickets();
+  }, [user]);
+
+  return { recentTickets, loading };
+}
+
 export function useDashboardStats() {
   const [stats, setStats] = useState({
     totalTasks: 0,

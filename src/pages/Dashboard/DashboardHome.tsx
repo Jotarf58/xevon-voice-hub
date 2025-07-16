@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDashboardStats } from '@/hooks/useSupabaseData';
+import { useDashboardStats, useRecentTickets } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,7 @@ export const DashboardHome: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { stats: dbStats, loading: statsLoading } = useDashboardStats();
+  const { recentTickets, loading: ticketsLoading } = useRecentTickets();
 
   const stats = [
     {
@@ -54,38 +55,24 @@ export const DashboardHome: React.FC = () => {
     }
   ];
 
-  const recentTickets = [
-    {
-      id: "TK-001",
-      title: "Problema na integração WhatsApp",
-      priority: "alta",
-      status: "open",
-      assignee: "João Silva",
-      time: "há 2 horas"
-    },
-    {
-      id: "TK-002", 
-      title: "Erro no sistema de webhooks",
-      priority: "média",
-      status: "in_progress",
-      assignee: "Maria Santos",
-      time: "há 4 horas"
-    },
-    {
-      id: "TK-003",
-      title: "Configuração Twilio",
-      priority: "baixa",
-      status: "proposed_solution",
-      assignee: "Pedro Costa",
-      time: "há 1 dia"
-    }
-  ];
+  // Função para formatar tempo relativo
+  const getRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'há menos de 1 hora';
+    if (diffInHours < 24) return `há ${diffInHours} hora${diffInHours > 1 ? 's' : ''}`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `há ${diffInDays} dia${diffInDays > 1 ? 's' : ''}`;
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'alta': return 'bg-red-500';
-      case 'média': return 'bg-yellow-500';
-      case 'baixa': return 'bg-green-500';
+      case 'high': return 'bg-red-500';
+      case 'medium': return 'bg-yellow-500';
+      case 'low': return 'bg-green-500';
       default: return 'bg-gray-500';
     }
   };
@@ -159,24 +146,43 @@ export const DashboardHome: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {recentTickets.map((ticket) => (
-              <div key={ticket.id} className="flex items-start gap-4 p-4 rounded-lg border border-border hover:bg-muted/30 transition-colors">
-                <div className={`w-3 h-3 rounded-full mt-2 ${getPriorityColor(ticket.priority)}`} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium text-foreground truncate">{ticket.title}</h4>
-                    <Badge variant="outline" className="text-xs">
-                      {ticket.id}
-                    </Badge>
+            {ticketsLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-start gap-4 p-4 rounded-lg border border-border">
+                    <div className="w-3 h-3 rounded-full mt-2 bg-muted animate-pulse" />
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="h-4 bg-muted rounded animate-pulse" />
+                      <div className="h-3 bg-muted rounded w-3/4 animate-pulse" />
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>👤 {ticket.assignee}</span>
-                    <span>📋 {getStatusLabel(ticket.status)}</span>
-                    <span>🕒 {ticket.time}</span>
+                ))}
+              </div>
+            ) : recentTickets.length > 0 ? (
+              recentTickets.map((ticket) => (
+                <div key={ticket.id} className="flex items-start gap-4 p-4 rounded-lg border border-border hover:bg-muted/30 transition-colors">
+                  <div className={`w-3 h-3 rounded-full mt-2 ${getPriorityColor(ticket.priority)}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-medium text-foreground truncate">{ticket.title}</h4>
+                      <Badge variant="outline" className="text-xs">
+                        #{ticket.id.slice(0, 8)}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span>👤 {ticket.assignee?.name || 'Não atribuído'}</span>
+                      <span>📋 {getStatusLabel(ticket.status)}</span>
+                      <span>🕒 {getRelativeTime(ticket.created_at)}</span>
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Ticket className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                <p>Nenhum ticket recente encontrado</p>
               </div>
-            ))}
+            )}
           </CardContent>
         </Card>
 

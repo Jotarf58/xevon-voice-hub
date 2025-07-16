@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTickets } from '@/hooks/useSupabaseData';
+import { useTickets, useTicketOperations } from '@/hooks/useSupabaseData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,9 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle,
-  Calendar
+  Calendar,
+  Edit,
+  X
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -27,6 +29,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TicketFormDialog } from '@/components/Dialogs/TicketFormDialog';
+import { TicketDetailsDialog } from '@/components/Dialogs/TicketDetailsDialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface TicketType {
   id: string;
@@ -45,13 +50,76 @@ interface TicketType {
 }
 
 export const TicketsPage: React.FC = () => {
+  const { tickets, loading, error, refetch } = useTickets();
+  const { createTicket, updateTicket, closeTicket } = useTicketOperations();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
   const [filterTeam, setFilterTeam] = useState('all');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<any>(null);
 
-  // Real data from database
-  const { tickets, loading, error } = useTickets();
+  // Funções de manipulação
+  const handleCreateTicket = () => {
+    setSelectedTicket(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditTicket = (ticket: any) => {
+    setSelectedTicket(ticket);
+    setIsFormOpen(true);
+  };
+
+  const handleViewTicket = (ticket: any) => {
+    setSelectedTicket(ticket);
+    setIsDetailsOpen(true);
+  };
+
+  const handleSaveTicket = async (ticketData: any) => {
+    try {
+      if (selectedTicket) {
+        await updateTicket(selectedTicket.id, ticketData);
+        toast({
+          title: "Sucesso",
+          description: "Ticket atualizado com sucesso!",
+        });
+      } else {
+        await createTicket(ticketData);
+        toast({
+          title: "Sucesso",
+          description: "Ticket criado com sucesso!",
+        });
+      }
+      refetch();
+      setSelectedTicket(null);
+      setIsFormOpen(false);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar ticket. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCloseTicket = async (ticketId: string, resolution: string = "Resolvido") => {
+    try {
+      await closeTicket(ticketId, resolution);
+      toast({
+        title: "Sucesso",
+        description: "Ticket fechado com sucesso!",
+      });
+      refetch();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao fechar ticket. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -139,7 +207,10 @@ export const TicketsPage: React.FC = () => {
             Gerir tickets de suporte e solicitações de clientes
           </p>
         </div>
-        <Button className="bg-gradient-primary text-primary-foreground">
+        <Button 
+          className="bg-gradient-primary text-primary-foreground"
+          onClick={handleCreateTicket}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Novo Ticket
         </Button>
@@ -346,12 +417,22 @@ export const TicketsPage: React.FC = () => {
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      <Ticket className="mr-2 h-4 w-4" />
-                      Ver Detalhes
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
+                   <DropdownMenuContent align="end">
+                     <DropdownMenuItem onClick={() => handleViewTicket(ticket)}>
+                       <Ticket className="mr-2 h-4 w-4" />
+                       Ver Detalhes
+                     </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => handleEditTicket(ticket)}>
+                       <Edit className="mr-2 h-4 w-4" />
+                       Editar
+                     </DropdownMenuItem>
+                     {ticket.status !== 'closed' && (
+                       <DropdownMenuItem onClick={() => handleCloseTicket(ticket.id)}>
+                         <X className="mr-2 h-4 w-4" />
+                         Fechar Ticket
+                       </DropdownMenuItem>
+                     )}
+                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
             </CardContent>
@@ -373,6 +454,22 @@ export const TicketsPage: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Diálogos */}
+      <TicketFormDialog
+        ticket={selectedTicket}
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        onSave={handleSaveTicket}
+      />
+
+      <TicketDetailsDialog
+        ticket={selectedTicket}
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        onEdit={handleEditTicket}
+        onDelete={() => {}} // Pode implementar depois se necessário
+      />
     </div>
   );
 };
