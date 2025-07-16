@@ -54,8 +54,8 @@ export function AppSidebar() {
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive 
-      ? "bg-gradient-primary text-primary-foreground font-medium shadow-sm" 
-      : "text-foreground hover:bg-muted/50 hover:text-foreground";
+      ? "bg-[hsl(var(--nav-active))] text-[hsl(var(--nav-active-foreground))] font-medium shadow-sm" 
+      : "text-foreground hover:bg-[hsl(var(--nav-hover))] hover:text-[hsl(var(--nav-hover-foreground))] transition-all duration-300";
 
   const handleLogout = () => {
     logout();
@@ -72,12 +72,16 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className={`${collapsed ? "w-16" : "w-64"} border-r border-border bg-card`}>
+    <Sidebar className={`${collapsed ? "w-16" : "w-64"} border-r border-border bg-card transition-all duration-300`}>
       <SidebarContent className="flex flex-col h-full">
         {/* Header with Logo */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-3">
-            <Star size={32} animated />
+            <img 
+              src="/lovable-uploads/18bd00ac-7312-4fae-9241-d12230e20fe4.png" 
+              alt="Xevon Logo" 
+              className="w-8 h-8 object-contain" 
+            />
             {!collapsed && (
               <div className="flex flex-col">
                 <span className="font-bold text-lg text-foreground">Xevon</span>
@@ -97,14 +101,14 @@ export function AppSidebar() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className="w-full">
-                    <NavLink 
-                      to={item.url} 
-                      end 
-                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200`}
-                    >
-                      <item.icon className="h-5 w-5 flex-shrink-0" />
-                      {!collapsed && <span className="truncate">{item.title}</span>}
-                    </NavLink>
+                     <NavLink 
+                       to={item.url} 
+                       end 
+                       className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 hover:scale-105`}
+                     >
+                       <item.icon className={`h-5 w-5 flex-shrink-0 transition-transform duration-300 ${collapsed ? '' : 'group-hover:scale-110'}`} />
+                       {!collapsed && <span className="truncate transition-all duration-300">{item.title}</span>}
+                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -123,14 +127,14 @@ export function AppSidebar() {
                 {developerMenuItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild className="w-full">
-                      <NavLink 
-                        to={item.url} 
-                        end 
-                        className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200`}
-                      >
-                        <item.icon className="h-5 w-5 flex-shrink-0" />
-                        {!collapsed && <span className="truncate">{item.title}</span>}
-                      </NavLink>
+                         <NavLink 
+                           to={item.url} 
+                           end 
+                           className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 hover:scale-105`}
+                         >
+                           <item.icon className={`h-5 w-5 flex-shrink-0 transition-transform duration-300 ${collapsed ? '' : 'group-hover:scale-110'}`} />
+                           {!collapsed && <span className="truncate transition-all duration-300">{item.title}</span>}
+                         </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}

@@ -33,7 +33,11 @@ export const LandingPage: React.FC = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Star size={32} animated />
+              <img 
+                src="/lovable-uploads/18bd00ac-7312-4fae-9241-d12230e20fe4.png" 
+                alt="Xevon Logo" 
+                className="w-8 h-8 object-contain" 
+              />
               <div>
                 <h1 className="text-xl font-bold text-foreground">Xevon</h1>
                 <p className="text-sm text-muted-foreground">Automation Hub</p>
@@ -54,7 +58,11 @@ export const LandingPage: React.FC = () => {
       <section className="py-20 text-center">
         <div className="container mx-auto px-6">
           <div className="flex justify-center mb-8">
-            <Star size={120} animated glowing />
+            <img 
+              src="/lovable-uploads/18bd00ac-7312-4fae-9241-d12230e20fe4.png" 
+              alt="Xevon Logo" 
+              className="w-32 h-32 object-contain animate-pulse-glow" 
+            />
           </div>
           
           <h1 className="text-5xl font-bold text-foreground mb-6 animate-fade-in">
@@ -150,7 +158,11 @@ export const LandingPage: React.FC = () => {
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-6 text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <Star size={24} />
+            <img 
+              src="/lovable-uploads/18bd00ac-7312-4fae-9241-d12230e20fe4.png" 
+              alt="Xevon Logo" 
+              className="w-6 h-6 object-contain" 
+            />
             <span className="font-semibold text-foreground">Xevon Automation Hub</span>
           </div>
           <p className="text-muted-foreground">
