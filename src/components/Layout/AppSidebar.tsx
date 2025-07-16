@@ -54,8 +54,8 @@ export function AppSidebar() {
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive 
-      ? "bg-[hsl(var(--nav-active))] text-[hsl(var(--nav-active-foreground))] font-medium shadow-sm" 
-      : "text-foreground hover:bg-[hsl(var(--nav-hover))] hover:text-[hsl(var(--nav-hover-foreground))] transition-all duration-300";
+      ? "bg-[hsl(var(--nav-active))] text-[hsl(var(--nav-active-foreground))] font-medium shadow-sm border border-border/50" 
+      : "text-foreground hover:bg-[hsl(var(--nav-hover))] hover:text-[hsl(var(--nav-hover-foreground))] transition-all duration-300 hover:shadow-md";
 
   const handleLogout = () => {
     logout();

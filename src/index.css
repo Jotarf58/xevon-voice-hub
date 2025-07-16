@@ -45,9 +45,9 @@ All colors MUST be HSL.
     --xevon-gray-light: 220 10% 85%;
     
     /* Sidebar navigation states */
-    --nav-active: 0 0% 8%;
+    --nav-active: 0 0% 4%;
     --nav-active-foreground: 0 0% 98%;
-    --nav-hover: 0 0% 20%;
+    --nav-hover: 0 0% 15%;
     --nav-hover-foreground: 0 0% 90%;
     
     /* Gradients */
@@ -116,9 +116,9 @@ All colors MUST be HSL.
     --sidebar-ring: 217.2 91.2% 59.8%;
     
     /* Dark mode navigation states */
-    --nav-active: 0 0% 15%;
+    --nav-active: 0 0% 4%;
     --nav-active-foreground: 0 0% 98%;
-    --nav-hover: 0 0% 25%;
+    --nav-hover: 0 0% 15%;
     --nav-hover-foreground: 0 0% 90%;
   }
 }
