@@ -67,10 +67,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
       if (!session) {
+        setSession(null);
+        setUser(null);
         setIsLoading(false);
       }
+      // If there is a session, the auth state change will handle it
     });
 
     return () => subscription.unsubscribe();
