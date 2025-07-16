@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,9 +73,33 @@ export const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
   const team = watch('team');
   const category = watch('category');
 
+  // Reset form when task changes
+  useEffect(() => {
+    if (task) {
+      reset({
+        title: task.title,
+        description: task.description || '',
+        status: task.status,
+        priority: task.priority,
+        team: task.team,
+        category: task.category,
+        due_date: task.due_date ? task.due_date.split('T')[0] : ''
+      });
+    } else {
+      reset({
+        title: '',
+        description: '',
+        status: 'pending' as const,
+        priority: 'medium' as const,
+        team: (user?.team as 'technical' | 'support' | 'sales' | 'management') || 'support',
+        category: '',
+        due_date: ''
+      });
+    }
+  }, [task, reset, user?.team]);
+
   const onSubmit = (data: TaskFormData) => {
     onSave(data);
-    reset();
     onOpenChange(false);
   };
 
