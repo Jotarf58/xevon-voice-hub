@@ -23,10 +23,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Star } from "@/components/ui/star";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -44,7 +42,7 @@ const developerMenuItems = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
   const { user, logout } = useAuth();
   const location = useLocation();
@@ -52,10 +50,6 @@ export function AppSidebar() {
   const currentPath = location.pathname;
 
   const isActive = (path: string) => currentPath === path;
-  const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive 
-      ? "bg-[hsl(var(--nav-active))] text-[hsl(var(--nav-active-foreground))] font-medium shadow-sm border border-border/50" 
-      : "text-foreground hover:bg-[hsl(var(--nav-hover))] hover:text-[hsl(var(--nav-hover-foreground))] transition-all duration-300 hover:shadow-md";
 
   const handleLogout = () => {
     logout();
@@ -72,72 +66,111 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className={`${collapsed ? "w-16" : "w-64"} border-r border-border bg-card transition-all duration-300`}>
+    <Sidebar 
+      className={`${collapsed ? "w-16" : "w-64"} border-r border-border bg-card transition-all duration-300`}
+      collapsible="icon"
+    >
       <SidebarContent className="flex flex-col h-full">
-        {/* Header with Logo */}
+        {/* Header with Logo and Toggle */}
         <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-3">
-            <img 
-              src="/lovable-uploads/18bd00ac-7312-4fae-9241-d12230e20fe4.png" 
-              alt="Xevon Logo" 
-              className="w-8 h-8 object-contain" 
-            />
-            {!collapsed && (
-              <div className="flex flex-col">
-                <span className="font-bold text-lg text-foreground">Xevon</span>
-                <span className="text-xs text-muted-foreground">Automation Hub</span>
-              </div>
-            )}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img 
+                src="/lovable-uploads/18bd00ac-7312-4fae-9241-d12230e20fe4.png" 
+                alt="Xevon Logo" 
+                className="w-8 h-8 object-contain flex-shrink-0" 
+              />
+              {!collapsed && (
+                <div className="flex flex-col">
+                  <span className="font-bold text-lg text-foreground">Xevon</span>
+                  <span className="text-xs text-muted-foreground">Automation Hub</span>
+                </div>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="h-6 w-6 p-0 hover:bg-muted"
+            >
+              {collapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </Button>
           </div>
         </div>
 
         {/* Navigation Menu */}
-        <SidebarGroup className="flex-1">
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
-            Menu Principal
-          </SidebarGroupLabel>
+        <SidebarGroup className="flex-1 px-3 py-2">
+          {!collapsed && (
+            <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2">
+              Menu Principal
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="w-full">
-                     <NavLink 
-                       to={item.url} 
-                       end 
-                       className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 hover:scale-105`}
-                     >
-                       <item.icon className={`h-5 w-5 flex-shrink-0 transition-transform duration-300 ${collapsed ? '' : 'group-hover:scale-110'}`} />
-                       {!collapsed && <span className="truncate transition-all duration-300">{item.title}</span>}
-                     </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {menuItems.map((item) => {
+                const active = isActive(item.url);
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <NavLink 
+                      to={item.url} 
+                      end 
+                      className={`
+                        flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 group w-full
+                        ${active 
+                          ? "bg-black text-white font-medium shadow-sm" 
+                          : "text-foreground hover:bg-gray-600 hover:text-white hover:shadow-md"
+                        }
+                        ${collapsed ? "justify-center" : ""}
+                      `}
+                      title={collapsed ? item.title : undefined}
+                    >
+                      <item.icon className="h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
+                      {!collapsed && <span className="truncate transition-all duration-300">{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
         {/* Developer Menu */}
         {user?.role === 'developer' && (
-          <SidebarGroup>
-            <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
-              Admin
-            </SidebarGroupLabel>
+          <SidebarGroup className="px-3 py-2">
+            {!collapsed && (
+              <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2">
+                Admin
+              </SidebarGroupLabel>
+            )}
             <SidebarGroupContent>
               <SidebarMenu className="space-y-1">
-                {developerMenuItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild className="w-full">
-                         <NavLink 
-                           to={item.url} 
-                           end 
-                           className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 hover:scale-105`}
-                         >
-                           <item.icon className={`h-5 w-5 flex-shrink-0 transition-transform duration-300 ${collapsed ? '' : 'group-hover:scale-110'}`} />
-                           {!collapsed && <span className="truncate transition-all duration-300">{item.title}</span>}
-                         </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {developerMenuItems.map((item) => {
+                  const active = isActive(item.url);
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <NavLink 
+                        to={item.url} 
+                        end 
+                        className={`
+                          flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 group w-full
+                          ${active 
+                            ? "bg-black text-white font-medium shadow-sm" 
+                            : "text-foreground hover:bg-gray-600 hover:text-white hover:shadow-md"
+                          }
+                          ${collapsed ? "justify-center" : ""}
+                        `}
+                        title={collapsed ? item.title : undefined}
+                      >
+                        <item.icon className="h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
+                        {!collapsed && <span className="truncate transition-all duration-300">{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -163,10 +196,26 @@ export function AppSidebar() {
             </div>
           )}
           
+          {collapsed && user && (
+            <div className="flex justify-center mb-3">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                  {getUserInitials(user.name)}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          )}
+          
           <Button
             variant="outline"
             onClick={handleLogout}
-            className={`w-full ${collapsed ? 'px-2' : 'px-4'} flex items-center gap-2 hover:bg-destructive hover:text-destructive-foreground border-border`}
+            className={`
+              w-full flex items-center gap-2 
+              hover:bg-destructive hover:text-destructive-foreground 
+              border-border transition-all duration-300
+              ${collapsed ? 'px-2 justify-center' : 'px-4'}
+            `}
+            title={collapsed ? "Sair" : undefined}
           >
             <LogOut className="h-4 w-4" />
             {!collapsed && <span>Sair</span>}
