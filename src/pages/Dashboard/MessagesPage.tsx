@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useMessages } from '@/hooks/useSupabaseData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,8 +47,8 @@ export const MessagesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  // Mock data - will be replaced with real data from database
-  const [messages] = useState<Message[]>([]);
+  // Real data from database
+  const { messages, loading, error } = useMessages();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -189,9 +190,31 @@ export const MessagesPage: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Loading State */}
+      {loading && (
+        <Card className="border-2">
+          <CardContent className="p-12 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Carregando mensagens...</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <Card className="border-2">
+          <CardContent className="p-12 text-center">
+            <MessageSquare className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">Erro ao carregar mensagens</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Messages List */}
-      <div className="space-y-4">
-        {filteredMessages.map((message) => (
+      {!loading && !error && (
+        <div className="space-y-4">
+          {filteredMessages.map((message) => (
           <Card key={message.id} className="border-2 hover:shadow-card transition-all duration-200">
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
@@ -257,16 +280,19 @@ export const MessagesPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {filteredMessages.length === 0 && (
+      {!loading && !error && filteredMessages.length === 0 && (
         <Card className="border-2">
           <CardContent className="p-12 text-center">
             <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma mensagem encontrada</h3>
             <p className="text-muted-foreground">
-              Conecte os dados da base de dados para ver as mensagens.
+              {searchTerm || filterStatus !== 'all' 
+                ? 'Nenhuma mensagem encontrada com os filtros aplicados.'
+                : 'Nenhuma mensagem registada ainda.'}
             </p>
           </CardContent>
         </Card>

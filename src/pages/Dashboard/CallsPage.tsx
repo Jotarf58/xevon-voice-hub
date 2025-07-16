@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useCalls } from '@/hooks/useSupabaseData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,8 +47,8 @@ export const CallsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  // Mock data - will be replaced with real data from database
-  const [calls] = useState<CallRecord[]>([]);
+  // Real data from database
+  const { calls, loading, error } = useCalls();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -189,9 +190,31 @@ export const CallsPage: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Loading State */}
+      {loading && (
+        <Card className="border-2">
+          <CardContent className="p-12 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Carregando chamadas...</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <Card className="border-2">
+          <CardContent className="p-12 text-center">
+            <Phone className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">Erro ao carregar chamadas</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Calls List */}
-      <div className="space-y-4">
-        {filteredCalls.map((call) => (
+      {!loading && !error && (
+        <div className="space-y-4">
+          {filteredCalls.map((call) => (
           <Card key={call.id} className="border-2 hover:shadow-card transition-all duration-200">
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
@@ -256,16 +279,19 @@ export const CallsPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {filteredCalls.length === 0 && (
+      {!loading && !error && filteredCalls.length === 0 && (
         <Card className="border-2">
           <CardContent className="p-12 text-center">
             <Phone className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma chamada encontrada</h3>
             <p className="text-muted-foreground">
-              Conecte os dados da base de dados para ver as chamadas.
+              {searchTerm || filterStatus !== 'all' 
+                ? 'Nenhuma chamada encontrada com os filtros aplicados.'
+                : 'Nenhuma chamada registada ainda.'}
             </p>
           </CardContent>
         </Card>

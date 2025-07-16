@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTasks } from '@/hooks/useSupabaseData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,8 +49,8 @@ export const TasksPage: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
 
-  // Mock data - will be replaced with real data from database
-  const [tasks] = useState<Task[]>([]);
+  // Real data from database
+  const { tasks, loading, error } = useTasks();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -209,9 +210,31 @@ export const TasksPage: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Loading State */}
+      {loading && (
+        <Card className="border-2">
+          <CardContent className="p-12 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Carregando tarefas...</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <Card className="border-2">
+          <CardContent className="p-12 text-center">
+            <CheckSquare className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">Erro ao carregar tarefas</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Tasks List */}
-      <div className="space-y-4">
-        {filteredTasks.map((task) => (
+      {!loading && !error && (
+        <div className="space-y-4">
+          {filteredTasks.map((task) => (
           <Card key={task.id} className="border-2 hover:shadow-card transition-all duration-200">
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
@@ -267,16 +290,19 @@ export const TasksPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {filteredTasks.length === 0 && (
+      {!loading && !error && filteredTasks.length === 0 && (
         <Card className="border-2">
           <CardContent className="p-12 text-center">
             <CheckSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma tarefa encontrada</h3>
             <p className="text-muted-foreground">
-              Conecte os dados da base de dados para ver as tarefas.
+              {searchTerm || filterStatus !== 'all' || filterCategory !== 'all'
+                ? 'Nenhuma tarefa encontrada com os filtros aplicados.'
+                : 'Nenhuma tarefa registada ainda.'}
             </p>
           </CardContent>
         </Card>

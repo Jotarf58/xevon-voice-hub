@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTickets } from '@/hooks/useSupabaseData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,8 +50,8 @@ export const TicketsPage: React.FC = () => {
   const [filterPriority, setFilterPriority] = useState('all');
   const [filterTeam, setFilterTeam] = useState('all');
 
-  // Mock data - will be replaced with real data from database
-  const [tickets] = useState<TicketType[]>([]);
+  // Real data from database
+  const { tickets, loading, error } = useTickets();
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -261,9 +262,31 @@ export const TicketsPage: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Loading State */}
+      {loading && (
+        <Card className="border-2">
+          <CardContent className="p-12 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Carregando tickets...</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <Card className="border-2">
+          <CardContent className="p-12 text-center">
+            <Ticket className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">Erro ao carregar tickets</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Tickets List */}
-      <div className="space-y-4">
-        {filteredTickets.map((ticket) => (
+      {!loading && !error && (
+        <div className="space-y-4">
+          {filteredTickets.map((ticket) => (
           <Card key={ticket.id} className="border-2 hover:shadow-card transition-all duration-200">
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
@@ -333,16 +356,19 @@ export const TicketsPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {filteredTickets.length === 0 && (
+      {!loading && !error && filteredTickets.length === 0 && (
         <Card className="border-2">
           <CardContent className="p-12 text-center">
             <Ticket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum ticket encontrado</h3>
             <p className="text-muted-foreground">
-              Conecte os dados da base de dados para ver os tickets.
+              {searchTerm || filterStatus !== 'all' || filterPriority !== 'all' || filterTeam !== 'all'
+                ? 'Nenhum ticket encontrado com os filtros aplicados.'
+                : 'Nenhum ticket registado ainda.'}
             </p>
           </CardContent>
         </Card>

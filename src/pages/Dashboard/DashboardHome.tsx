@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDashboardStats } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,33 +21,34 @@ import { useNavigate } from 'react-router-dom';
 export const DashboardHome: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { stats: dbStats, loading: statsLoading } = useDashboardStats();
 
   const stats = [
     {
       title: "Tarefas Ativas",
-      value: "23",
-      change: "+12%",
+      value: statsLoading ? "..." : dbStats.activeTasks.toString(),
+      total: statsLoading ? "..." : dbStats.totalTasks.toString(),
       icon: <CheckSquare className="h-5 w-5" />,
       color: "text-blue-600"
     },
     {
       title: "Tickets Abertos",
-      value: "8",
-      change: "-5%",
+      value: statsLoading ? "..." : dbStats.openTickets.toString(),
+      total: statsLoading ? "..." : dbStats.totalTickets.toString(),
       icon: <Ticket className="h-5 w-5" />,
       color: "text-orange-600"
     },
     {
       title: "Chamadas Hoje",
-      value: "156",
-      change: "+23%",
+      value: statsLoading ? "..." : dbStats.todayCalls.toString(),
+      total: statsLoading ? "..." : dbStats.totalCalls.toString(),
       icon: <Phone className="h-5 w-5" />,
       color: "text-green-600"
     },
     {
-      title: "Mensagens",
-      value: "89",
-      change: "+8%",
+      title: "Mensagens Hoje",
+      value: statsLoading ? "..." : dbStats.todayMessages.toString(),
+      total: statsLoading ? "..." : dbStats.totalMessages.toString(),
       icon: <MessageSquare className="h-5 w-5" />,
       color: "text-purple-600"
     }
@@ -124,11 +126,8 @@ export const DashboardHome: React.FC = () => {
                 <div className={`p-2 rounded-lg bg-muted/30 ${stat.color}`}>
                   {stat.icon}
                 </div>
-                <Badge 
-                  variant={stat.change.startsWith('+') ? "default" : "secondary"}
-                  className="text-xs"
-                >
-                  {stat.change}
+                <Badge variant="outline" className="text-xs">
+                  Total: {stat.total}
                 </Badge>
               </div>
               <div className="mt-4">

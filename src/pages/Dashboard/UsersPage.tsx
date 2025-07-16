@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from '@/contexts/AuthContext';
+import { useUsers } from '@/hooks/useSupabaseData';
 
 interface User {
   id: string;
@@ -44,8 +45,8 @@ export const UsersPage: React.FC = () => {
   const [filterRole, setFilterRole] = useState('all');
   const [filterTeam, setFilterTeam] = useState('all');
 
-  // Mock data - will be replaced with real data from database
-  const [users] = useState<User[]>([]);
+  // Real data from database
+  const { users, loading, error } = useUsers();
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -207,9 +208,31 @@ export const UsersPage: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Loading State */}
+      {loading && (
+        <Card className="border-2">
+          <CardContent className="p-12 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Carregando utilizadores...</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <Card className="border-2">
+          <CardContent className="p-12 text-center">
+            <Users className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">Erro ao carregar utilizadores</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Users List */}
-      <div className="space-y-4">
-        {filteredUsers.map((user) => (
+      {!loading && !error && (
+        <div className="space-y-4">
+          {filteredUsers.map((user) => (
           <Card key={user.id} className="border-2 hover:shadow-card transition-all duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -256,16 +279,19 @@ export const UsersPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {filteredUsers.length === 0 && (
+      {!loading && !error && filteredUsers.length === 0 && (
         <Card className="border-2">
           <CardContent className="p-12 text-center">
             <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum utilizador encontrado</h3>
             <p className="text-muted-foreground">
-              Conecte os dados da base de dados para ver os utilizadores.
+              {searchTerm || filterRole !== 'all' || filterTeam !== 'all'
+                ? 'Nenhum utilizador encontrado com os filtros aplicados.'
+                : 'Nenhum utilizador registado ainda.'}
             </p>
           </CardContent>
         </Card>
