@@ -67,7 +67,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar 
-      className={`${collapsed ? "w-16" : "w-64"} border-r border-border bg-card transition-all duration-300`}
+      className={`${collapsed ? "w-20" : "w-64"} border-r border-border bg-card transition-all duration-300`}
       collapsible="icon"
     >
       <SidebarContent className="flex flex-col h-full">
