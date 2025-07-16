@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,8 @@ import {
   Shield,
   Server,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -23,11 +25,27 @@ interface ThemeConfig {
   compactMode: boolean;
 }
 
+interface SystemSettings {
+  autoBackup: boolean;
+  maintenanceMode: boolean;
+  debugMode: boolean;
+  logLevel: string;
+}
+
+interface Setting {
+  setting_key: string;
+  setting_value: any;
+  description: string;
+  category: string;
+}
+
 export const SettingsPage: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  // Redirect if not admin
+  // Redirect if not developer
   if (user?.role !== 'developer') {
     return (
       <div className="p-6">
@@ -36,7 +54,7 @@ export const SettingsPage: React.FC = () => {
             <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Acesso Negado</h3>
             <p className="text-muted-foreground">
-              Apenas utilizadores com cargo "Admin" podem aceder às configurações.
+              Apenas utilizadores com cargo "Developer" podem aceder às configurações.
             </p>
           </CardContent>
         </Card>
@@ -45,31 +63,152 @@ export const SettingsPage: React.FC = () => {
   }
 
   const [themeConfig, setThemeConfig] = useState<ThemeConfig>({
-    primaryColor: '#3b82f6',
+    primaryColor: '#ef4444',
     darkMode: false,
     compactMode: false
   });
 
-  const [systemSettings, setSystemSettings] = useState({
+  const [systemSettings, setSystemSettings] = useState<SystemSettings>({
     autoBackup: true,
     maintenanceMode: false,
     debugMode: false,
     logLevel: 'info'
   });
 
-  const handleSaveTheme = () => {
-    // Apply theme changes
-    toast({
-      title: "Tema aplicado",
-      description: "As configurações de tema foram aplicadas.",
-    });
+  // Load settings from database
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const { data: settings, error } = await supabase
+          .from('settings')
+          .select('*');
+
+        if (error) throw error;
+
+        if (settings) {
+          const settingsMap = settings.reduce((acc, setting) => {
+            acc[setting.setting_key] = setting.setting_value;
+            return acc;
+          }, {} as Record<string, any>);
+
+          setThemeConfig({
+            primaryColor: settingsMap.theme_primary_color || '#ef4444',
+            darkMode: settingsMap.theme_dark_mode || false,
+            compactMode: settingsMap.theme_compact_mode || false
+          });
+
+          setSystemSettings({
+            autoBackup: settingsMap.system_auto_backup || true,
+            maintenanceMode: settingsMap.system_maintenance_mode || false,
+            debugMode: settingsMap.system_debug_mode || false,
+            logLevel: settingsMap.system_log_level || 'info'
+          });
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar configurações.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, [toast]);
+
+  const updateSetting = async (key: string, value: any) => {
+    const { error } = await supabase
+      .from('settings')
+      .upsert({
+        setting_key: key,
+        setting_value: value,
+        updated_by: user?.id
+      });
+
+    if (error) throw error;
   };
 
-  const handleSaveSystemSettings = () => {
-    toast({
-      title: "Configurações do sistema",
-      description: "As configurações do sistema foram salvas.",
-    });
+  const handleSaveTheme = async () => {
+    setSaving(true);
+    try {
+      await Promise.all([
+        updateSetting('theme_primary_color', themeConfig.primaryColor),
+        updateSetting('theme_dark_mode', themeConfig.darkMode),
+        updateSetting('theme_compact_mode', themeConfig.compactMode)
+      ]);
+
+      // Apply theme changes to CSS variables
+      const root = document.documentElement;
+      if (themeConfig.primaryColor) {
+        // Convert hex to HSL
+        const hex = themeConfig.primaryColor.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16) / 255;
+        const g = parseInt(hex.substr(2, 2), 16) / 255;
+        const b = parseInt(hex.substr(4, 2), 16) / 255;
+        
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h = 0, s = 0, l = (max + min) / 2;
+
+        if (max !== min) {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+          }
+          h /= 6;
+        }
+
+        const hslValue = `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+        root.style.setProperty('--primary', hslValue);
+        root.style.setProperty('--accent', hslValue);
+      }
+
+      toast({
+        title: "Tema aplicado",
+        description: "As configurações de tema foram aplicadas com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error saving theme:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar configurações de tema.",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveSystemSettings = async () => {
+    setSaving(true);
+    try {
+      await Promise.all([
+        updateSetting('system_auto_backup', systemSettings.autoBackup),
+        updateSetting('system_maintenance_mode', systemSettings.maintenanceMode),
+        updateSetting('system_debug_mode', systemSettings.debugMode),
+        updateSetting('system_log_level', systemSettings.logLevel)
+      ]);
+
+      toast({
+        title: "Configurações salvas",
+        description: "As configurações do sistema foram salvas com sucesso.",
+      });
+    } catch (error) {
+      console.error('Error saving system settings:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar configurações do sistema.",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -93,6 +232,17 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Carregando configurações...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -103,7 +253,7 @@ export const SettingsPage: React.FC = () => {
           </p>
         </div>
         <Badge variant="outline" className="text-sm px-3 py-1">
-          Admin Access
+          Developer Access
         </Badge>
       </div>
 
@@ -149,7 +299,7 @@ export const SettingsPage: React.FC = () => {
                     <Input
                       value={themeConfig.primaryColor}
                       onChange={(e) => setThemeConfig(prev => ({ ...prev, primaryColor: e.target.value }))}
-                      placeholder="#3b82f6"
+                      placeholder="#ef4444"
                       className="flex-1"
                     />
                   </div>
@@ -175,7 +325,12 @@ export const SettingsPage: React.FC = () => {
                 </div>
               </div>
 
-              <Button onClick={handleSaveTheme} className="bg-gradient-primary">
+              <Button 
+                onClick={handleSaveTheme} 
+                className="bg-gradient-primary"
+                disabled={saving}
+              >
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Aplicar Tema
               </Button>
             </CardContent>
@@ -230,7 +385,12 @@ export const SettingsPage: React.FC = () => {
                 </div>
               </div>
 
-              <Button onClick={handleSaveSystemSettings} className="bg-gradient-primary">
+              <Button 
+                onClick={handleSaveSystemSettings} 
+                className="bg-gradient-primary"
+                disabled={saving}
+              >
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Salvar Configurações
               </Button>
             </CardContent>
