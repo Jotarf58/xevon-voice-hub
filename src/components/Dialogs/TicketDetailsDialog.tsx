@@ -3,22 +3,22 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Ticket, User, Calendar, Phone, MessageSquare, Clock, Edit, Trash2 } from 'lucide-react';
+import { Ticket, User, Calendar, Phone, MessageSquare, Clock, Edit, Trash2, Plus, Settings } from 'lucide-react';
 
 interface TicketType {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
+  type: 'bug' | 'feature_request' | 'support' | 'integration' | 'configuration';
   status: 'open' | 'in_progress' | 'proposed_solution' | 'closed';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  assignee: string;
-  team: string;
-  category: string;
-  source: 'call' | 'whatsapp' | 'manual';
-  customer: string;
-  customerPhone: string;
-  createdAt: string;
-  updatedAt: string;
+  priority: 'low' | 'medium' | 'high';
+  assignee_id: string | null;
+  reporter_id: string;
+  team: 'technical' | 'support' | 'sales' | 'management';
+  resolution: string | null;
+  resolved_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface TicketDetailsDialogProps {
@@ -50,18 +50,20 @@ export const TicketDetailsDialog: React.FC<TicketDetailsDialogProps> = ({
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'high': return 'bg-red-100 text-red-800 border-red-200';
       case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'low': return 'bg-green-100 text-green-800 border-green-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  const getSourceIcon = (source: string) => {
-    switch (source) {
-      case 'call': return <Phone className="h-4 w-4" />;
-      case 'whatsapp': return <MessageSquare className="h-4 w-4" />;
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'bug': return <Ticket className="h-4 w-4" />;
+      case 'feature_request': return <Plus className="h-4 w-4" />;
+      case 'support': return <MessageSquare className="h-4 w-4" />;
+      case 'integration': return <Phone className="h-4 w-4" />;
+      case 'configuration': return <Settings className="h-4 w-4" />;
       default: return <Ticket className="h-4 w-4" />;
     }
   };
@@ -95,17 +97,17 @@ export const TicketDetailsDialog: React.FC<TicketDetailsDialogProps> = ({
               {getStatusLabel(ticket.status)}
             </Badge>
             <Badge variant="outline" className={`text-xs border ${getPriorityColor(ticket.priority)}`}>
-              {ticket.priority.toUpperCase()}
+              {ticket.priority?.toUpperCase() || 'N/A'}
             </Badge>
             <Badge variant="outline" className="text-xs">
-              {getSourceIcon(ticket.source)}
-              <span className="ml-1">{ticket.source.toUpperCase()}</span>
+              {getTypeIcon(ticket.type)}
+              <span className="ml-1">{ticket.type?.toUpperCase() || 'N/A'}</span>
             </Badge>
           </div>
 
           <div>
             <h3 className="font-semibold mb-2">Descrição</h3>
-            <p className="text-muted-foreground">{ticket.description}</p>
+            <p className="text-muted-foreground">{ticket.description || 'Sem descrição'}</p>
           </div>
 
           <Separator />
@@ -116,22 +118,21 @@ export const TicketDetailsDialog: React.FC<TicketDetailsDialogProps> = ({
                 <User className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium">Responsável</p>
-                  <p className="text-sm text-muted-foreground">{ticket.assignee}</p>
+                  <p className="text-sm text-muted-foreground">{ticket.assignee_id ? 'Atribuído' : 'Não atribuído'}</p>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm font-medium">Cliente</p>
-                <p className="text-sm text-muted-foreground">{ticket.customer}</p>
+                <p className="text-sm font-medium">Tipo</p>
+                <p className="text-sm text-muted-foreground">{ticket.type}</p>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-muted-foreground" />
+              {ticket.resolution && (
                 <div>
-                  <p className="text-sm font-medium">Telefone</p>
-                  <p className="text-sm text-muted-foreground">{ticket.customerPhone}</p>
+                  <p className="text-sm font-medium">Resolução</p>
+                  <p className="text-sm text-muted-foreground">{ticket.resolution}</p>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -140,17 +141,12 @@ export const TicketDetailsDialog: React.FC<TicketDetailsDialogProps> = ({
                 <p className="text-sm text-muted-foreground">{ticket.team}</p>
               </div>
 
-              <div>
-                <p className="text-sm font-medium">Categoria</p>
-                <p className="text-sm text-muted-foreground">{ticket.category}</p>
-              </div>
-
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium">Criado em</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(ticket.createdAt).toLocaleString('pt-BR')}
+                    {new Date(ticket.created_at).toLocaleString('pt-BR')}
                   </p>
                 </div>
               </div>
@@ -160,10 +156,22 @@ export const TicketDetailsDialog: React.FC<TicketDetailsDialogProps> = ({
                 <div>
                   <p className="text-sm font-medium">Última actualização</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(ticket.updatedAt).toLocaleString('pt-BR')}
+                    {new Date(ticket.updated_at).toLocaleString('pt-BR')}
                   </p>
                 </div>
               </div>
+
+              {ticket.resolved_at && (
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Resolvido em</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(ticket.resolved_at).toLocaleString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
