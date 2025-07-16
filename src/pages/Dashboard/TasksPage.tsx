@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTasks, useTaskOperations } from '@/hooks/useSupabaseData';
+import { useTasks, useTaskOperations, useArchivedTasks } from '@/hooks/useSupabaseData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TaskFormDialog } from '@/components/Dialogs/TaskFormDialog';
 import { TaskDetailsDialog } from '@/components/Dialogs/TaskDetailsDialog';
 import { useToast } from '@/hooks/use-toast';
@@ -49,18 +51,22 @@ interface Task {
   creator?: { name: string; email: string } | null;
   created_at: string;
   updated_at: string;
+  archived?: boolean;
 }
 
 export const TasksPage: React.FC = () => {
   const { user } = useAuth();
   const { tasks, loading, error, refetch } = useTasks();
-  const { createTask, updateTask, completeTask } = useTaskOperations();
+  const { tasks: archivedTasks, loading: archivedLoading, error: archivedError, refetch: refetchArchived } = useArchivedTasks();
+  const { createTask, updateTask, completeTask, archiveTask } = useTaskOperations();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
+  const [taskToArchive, setTaskToArchive] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<any>(null);
 
   // Funções de manipulação
@@ -109,6 +115,11 @@ export const TasksPage: React.FC = () => {
   const handleCompleteTask = async (taskId: string) => {
     try {
       await completeTask(taskId);
+      
+      // Mostrar diálogo para arquivar
+      setTaskToArchive(taskId);
+      setShowArchiveDialog(true);
+      
       toast({
         title: "Sucesso",
         description: "Tarefa marcada como concluída!",
@@ -118,6 +129,28 @@ export const TasksPage: React.FC = () => {
       toast({
         title: "Erro",
         description: "Erro ao completar tarefa. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleArchiveTask = async () => {
+    if (!taskToArchive) return;
+    
+    try {
+      await archiveTask(taskToArchive);
+      toast({
+        title: "Sucesso",
+        description: "Tarefa arquivada com sucesso!",
+      });
+      refetch();
+      refetchArchived();
+      setShowArchiveDialog(false);
+      setTaskToArchive(null);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao arquivar tarefa. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -192,206 +225,334 @@ export const TasksPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-2">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <CheckSquare className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-2xl font-bold text-foreground">{taskStats.total}</p>
-                <p className="text-sm text-muted-foreground">Total</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Tabs para Ativas e Arquivadas */}
+      <Tabs defaultValue="active" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="active">Tarefas Ativas</TabsTrigger>
+          <TabsTrigger value="archived">Arquivo de Tarefas</TabsTrigger>
+        </TabsList>
         
-        <Card className="border-2">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-yellow-500" />
-              <div>
-                <p className="text-2xl font-bold text-foreground">{taskStats.pending}</p>
-                <p className="text-sm text-muted-foreground">Pendentes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-2">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-blue-500" />
-              <div>
-                <p className="text-2xl font-bold text-foreground">{taskStats.inProgress}</p>
-                <p className="text-sm text-muted-foreground">Em Progresso</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-2">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-green-500" />
-              <div>
-                <p className="text-2xl font-bold text-foreground">{taskStats.completed}</p>
-                <p className="text-sm text-muted-foreground">Concluídas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card className="border-2">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar tarefas..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Status</SelectItem>
-                <SelectItem value="pending">Pendente</SelectItem>
-                <SelectItem value="in_progress">Em Progresso</SelectItem>
-                <SelectItem value="completed">Concluída</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas Categorias</SelectItem>
-                <SelectItem value="Integration">Integração</SelectItem>
-                <SelectItem value="Content">Conteúdo</SelectItem>
-                <SelectItem value="Analytics">Analytics</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Loading State */}
-      {loading && (
-        <Card className="border-2">
-          <CardContent className="p-12 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Carregando tarefas...</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <Card className="border-2">
-          <CardContent className="p-12 text-center">
-            <CheckSquare className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">Erro ao carregar tarefas</h3>
-            <p className="text-muted-foreground mb-4">{error}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Tasks List */}
-      {!loading && !error && (
-        <div className="space-y-4">
-          {filteredTasks.map((task) => (
-          <Card key={task.id} className="border-2 hover:shadow-card transition-all duration-200">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-foreground text-lg">{task.title}</h3>
-                    <Badge variant="outline" className="text-xs">
-                      {task.id}
-                    </Badge>
-                    <Badge className={`text-xs ${getStatusColor(task.status)}`}>
-                      {getStatusLabel(task.status)}
-                    </Badge>
-                    <Badge variant="outline" className={`text-xs border ${getPriorityColor(task.priority)}`}>
-                      {task.priority.toUpperCase()}
-                    </Badge>
-                  </div>
-                  {task.description && (
-                    <p className="text-muted-foreground mb-4">{task.description}</p>
-                  )}
-                  
-                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <User className="h-4 w-4" />
-                      <span>Responsável: {task.assignee?.name || 'Não atribuído'}</span>
-                    </div>
-                    {task.due_date && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>{new Date(task.due_date).toLocaleDateString('pt-BR')}</span>
-                      </div>
-                    )}
-                    <div>
-                      <span className="font-medium">Equipe:</span> {task.team}
-                    </div>
-                    <div>
-                      <span className="font-medium">Categoria:</span> {task.category}
-                    </div>
+        <TabsContent value="active" className="space-y-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="border-2">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">{taskStats.total}</p>
+                    <p className="text-sm text-muted-foreground">Total</p>
                   </div>
                 </div>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                   <DropdownMenuContent align="end">
-                     <DropdownMenuItem onClick={() => handleViewTask(task)}>
-                       <CheckSquare className="mr-2 h-4 w-4" />
-                       Ver Detalhes
-                     </DropdownMenuItem>
-                     <DropdownMenuItem onClick={() => handleEditTask(task)}>
-                       <Edit className="mr-2 h-4 w-4" />
-                       Editar
-                     </DropdownMenuItem>
-                     {task.status !== 'completed' && (
-                       <DropdownMenuItem onClick={() => handleCompleteTask(task.id)}>
-                         <CheckCircle className="mr-2 h-4 w-4" />
-                         Marcar como Concluída
-                       </DropdownMenuItem>
-                     )}
-                   </DropdownMenuContent>
-                </DropdownMenu>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-2">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-yellow-500" />
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">{taskStats.pending}</p>
+                    <p className="text-sm text-muted-foreground">Pendentes</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-2">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-blue-500" />
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">{taskStats.inProgress}</p>
+                    <p className="text-sm text-muted-foreground">Em Progresso</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-2">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-green-500" />
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">{taskStats.completed}</p>
+                    <p className="text-sm text-muted-foreground">Concluídas</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Filters */}
+          <Card className="border-2">
+            <CardContent className="p-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar tarefas..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Status</SelectItem>
+                    <SelectItem value="pending">Pendente</SelectItem>
+                    <SelectItem value="in_progress">Em Progresso</SelectItem>
+                    <SelectItem value="completed">Concluída</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas Categorias</SelectItem>
+                    <SelectItem value="Integration">Integração</SelectItem>
+                    <SelectItem value="Content">Conteúdo</SelectItem>
+                    <SelectItem value="Analytics">Analytics</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
-          ))}
-        </div>
-      )}
 
-      {!loading && !error && filteredTasks.length === 0 && (
-        <Card className="border-2">
-          <CardContent className="p-12 text-center">
-            <CheckSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma tarefa encontrada</h3>
-            <p className="text-muted-foreground">
-              {searchTerm || filterStatus !== 'all' || filterCategory !== 'all'
-                ? 'Nenhuma tarefa encontrada com os filtros aplicados.'
-                : 'Nenhuma tarefa registada ainda.'}
-            </p>
-          </CardContent>
-        </Card>
-      )}
+          {/* Loading State */}
+          {loading && (
+            <Card className="border-2">
+              <CardContent className="p-12 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Carregando tarefas...</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <Card className="border-2">
+              <CardContent className="p-12 text-center">
+                <CheckSquare className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">Erro ao carregar tarefas</h3>
+                <p className="text-muted-foreground mb-4">{error}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Tasks List */}
+          {!loading && !error && (
+            <div className="space-y-4">
+              {filteredTasks.map((task) => (
+              <Card key={task.id} className="border-2 hover:shadow-card transition-all duration-200 cursor-pointer" onClick={() => handleViewTask(task)}>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold text-foreground text-lg">{task.title}</h3>
+                        <Badge variant="outline" className="text-xs">
+                          {task.id}
+                        </Badge>
+                        <Badge className={`text-xs ${getStatusColor(task.status)}`}>
+                          {getStatusLabel(task.status)}
+                        </Badge>
+                        <Badge variant="outline" className={`text-xs border ${getPriorityColor(task.priority)}`}>
+                          {task.priority.toUpperCase()}
+                        </Badge>
+                      </div>
+                      {task.description && (
+                        <p className="text-muted-foreground mb-4">{task.description}</p>
+                      )}
+                      
+                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <User className="h-4 w-4" />
+                          <span>Responsável: {task.assignee?.name || 'Não atribuído'}</span>
+                        </div>
+                        {task.due_date && (
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            <span>{new Date(task.due_date).toLocaleDateString('pt-BR')}</span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-medium">Equipe:</span> {task.team}
+                        </div>
+                        <div>
+                          <span className="font-medium">Categoria:</span> {task.category}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                       <DropdownMenuContent align="end">
+                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditTask(task); }}>
+                           <Edit className="mr-2 h-4 w-4" />
+                           Editar
+                         </DropdownMenuItem>
+                         {task.status !== 'completed' && (
+                           <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleCompleteTask(task.id); }}>
+                             <CheckCircle className="mr-2 h-4 w-4" />
+                             Marcar como Concluída
+                           </DropdownMenuItem>
+                         )}
+                       </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardContent>
+              </Card>
+              ))}
+            </div>
+          )}
+
+          {!loading && !error && filteredTasks.length === 0 && (
+            <Card className="border-2">
+              <CardContent className="p-12 text-center">
+                <CheckSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma tarefa encontrada</h3>
+                <p className="text-muted-foreground">
+                  {searchTerm || filterStatus !== 'all' || filterCategory !== 'all'
+                    ? 'Nenhuma tarefa encontrada com os filtros aplicados.'
+                    : 'Nenhuma tarefa registada ainda.'}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="archived" className="space-y-6">
+          {/* Archived Tasks Stats */}
+          <Card className="border-2">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <CheckSquare className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{archivedTasks.length}</p>
+                  <p className="text-sm text-muted-foreground">Tarefas Arquivadas</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Loading State */}
+          {archivedLoading && (
+            <Card className="border-2">
+              <CardContent className="p-12 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Carregando tarefas arquivadas...</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Error State */}
+          {archivedError && (
+            <Card className="border-2">
+              <CardContent className="p-12 text-center">
+                <CheckSquare className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">Erro ao carregar tarefas arquivadas</h3>
+                <p className="text-muted-foreground mb-4">{archivedError}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Archived Tasks List */}
+          {!archivedLoading && !archivedError && (
+            <div className="space-y-4">
+              {archivedTasks.map((task) => (
+              <Card key={task.id} className="border-2 hover:shadow-card transition-all duration-200 cursor-pointer opacity-75" onClick={() => handleViewTask(task)}>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold text-foreground text-lg">{task.title}</h3>
+                        <Badge variant="outline" className="text-xs">
+                          ARQUIVADA
+                        </Badge>
+                        <Badge className={`text-xs ${getStatusColor(task.status)}`}>
+                          {getStatusLabel(task.status)}
+                        </Badge>
+                        <Badge variant="outline" className={`text-xs border ${getPriorityColor(task.priority)}`}>
+                          {task.priority.toUpperCase()}
+                        </Badge>
+                      </div>
+                      {task.description && (
+                        <p className="text-muted-foreground mb-4">{task.description}</p>
+                      )}
+                      
+                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <User className="h-4 w-4" />
+                          <span>Responsável: {task.assignee?.name || 'Não atribuído'}</span>
+                        </div>
+                        {task.due_date && (
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            <span>{new Date(task.due_date).toLocaleDateString('pt-BR')}</span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-medium">Equipe:</span> {task.team}
+                        </div>
+                        <div>
+                          <span className="font-medium">Categoria:</span> {task.category}
+                        </div>
+                        <div>
+                          <span className="font-medium">Arquivada em:</span> {new Date(task.updated_at).toLocaleDateString('pt-BR')}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              ))}
+            </div>
+          )}
+
+          {!archivedLoading && !archivedError && archivedTasks.length === 0 && (
+            <Card className="border-2">
+              <CardContent className="p-12 text-center">
+                <CheckSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma tarefa arquivada</h3>
+                <p className="text-muted-foreground">
+                  Tarefas concluídas e arquivadas aparecerão aqui.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Archive Confirmation Dialog */}
+      <AlertDialog open={showArchiveDialog} onOpenChange={setShowArchiveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Arquivar Tarefa</AlertDialogTitle>
+            <AlertDialogDescription>
+              A tarefa foi marcada como concluída. Deseja arquivá-la? 
+              Tarefas arquivadas ficam disponíveis na seção "Arquivo de Tarefas" para consulta.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowArchiveDialog(false)}>
+              Manter Ativa
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleArchiveTask}>
+              Arquivar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Diálogos */}
       <TaskFormDialog

@@ -123,6 +123,7 @@ export function useTasks() {
             assignee:profiles!tasks_assignee_id_fkey(name, email),
             creator:profiles!tasks_created_by_fkey(name, email)
           `)
+          .eq('archived', false)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -149,6 +150,7 @@ export function useTasks() {
           assignee:profiles!tasks_assignee_id_fkey(name, email),
           creator:profiles!tasks_created_by_fkey(name, email)
         `)
+        .eq('archived', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -349,23 +351,33 @@ export function useTaskOperations() {
   };
 
   const completeTask = async (taskId: string) => {
-    if (!user) throw new Error('Utilizador não autenticado');
-
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('tasks')
-      .update({ 
-        status: 'completed',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', taskId)
-      .select()
-      .single();
-
+      .update({ status: 'completed' })
+      .eq('id', taskId);
+    
     if (error) throw error;
-    return data;
   };
 
-  return { createTask, updateTask, completeTask };
+  const archiveTask = async (taskId: string) => {
+    const { error } = await supabase
+      .from('tasks')
+      .update({ archived: true })
+      .eq('id', taskId);
+    
+    if (error) throw error;
+  };
+
+  const deleteTask = async (taskId: string) => {
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId);
+    
+    if (error) throw error;
+  };
+
+  return { createTask, updateTask, deleteTask, completeTask, archiveTask };
 }
 
 // Hook para criar/atualizar tickets
@@ -547,4 +559,65 @@ export function useDashboardStats() {
   }, [user]);
 
   return { stats, loading };
+}
+
+export function useArchivedTasks() {
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchArchivedTasks = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('tasks')
+          .select(`
+            *,
+            assignee:profiles!tasks_assignee_id_fkey(name, email),
+            creator:profiles!tasks_created_by_fkey(name, email)
+          `)
+          .eq('archived', true)
+          .order('updated_at', { ascending: false });
+
+        if (error) throw error;
+        setTasks(data || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erro ao carregar tarefas arquivadas');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArchivedTasks();
+  }, [user]);
+
+  const refetch = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('tasks')
+        .select(`
+          *,
+          assignee:profiles!tasks_assignee_id_fkey(name, email),
+          creator:profiles!tasks_created_by_fkey(name, email)
+        `)
+        .eq('archived', true)
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+      setTasks(data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar tarefas arquivadas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { tasks, loading, error, refetch };
 }
