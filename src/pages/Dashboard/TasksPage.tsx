@@ -41,10 +41,12 @@ interface Task {
   status: 'pending' | 'in_progress' | 'completed';
   priority: 'low' | 'medium' | 'high';
   assignee_id: string | null;
+  assignee?: { name: string; email: string } | null;
   team: 'technical' | 'support' | 'sales' | 'management';
   category: string;
   due_date: string | null;
   created_by: string;
+  creator?: { name: string; email: string } | null;
   created_at: string;
   updated_at: string;
 }
@@ -330,7 +332,7 @@ export const TasksPage: React.FC = () => {
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <User className="h-4 w-4" />
-                      <span>Responsável: {task.assignee_id || 'Não atribuído'}</span>
+                      <span>Responsável: {task.assignee?.name || 'Não atribuído'}</span>
                     </div>
                     {task.due_date && (
                       <div className="flex items-center gap-1">

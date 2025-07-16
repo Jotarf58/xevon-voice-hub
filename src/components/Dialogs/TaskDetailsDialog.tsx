@@ -11,11 +11,11 @@ interface Task {
   description: string;
   status: 'pending' | 'in_progress' | 'completed';
   priority: 'low' | 'medium' | 'high';
-  assignee: string;
+  assignee?: { name: string; email: string } | null;
   team: string;
   category: string;
-  dueDate: string;
-  createdBy: string;
+  due_date?: string;
+  creator?: { name: string; email: string } | null;
 }
 
 interface TaskDetailsDialogProps {
@@ -98,7 +98,9 @@ export const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
                 <User className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium">Responsável</p>
-                  <p className="text-sm text-muted-foreground">{task.assignee}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {task.assignee?.name || 'Não atribuído'}
+                  </p>
                 </div>
               </div>
 
@@ -107,7 +109,7 @@ export const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
                 <div>
                   <p className="text-sm font-medium">Data de Vencimento</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(task.dueDate).toLocaleDateString('pt-BR')}
+                    {task.due_date ? new Date(task.due_date).toLocaleDateString('pt-BR') : 'Sem data definida'}
                   </p>
                 </div>
               </div>
@@ -126,7 +128,9 @@ export const TaskDetailsDialog: React.FC<TaskDetailsDialogProps> = ({
 
               <div>
                 <p className="text-sm font-medium">Criado por</p>
-                <p className="text-sm text-muted-foreground">{task.createdBy}</p>
+                <p className="text-sm text-muted-foreground">
+                  {task.creator?.name || 'Desconhecido'}
+                </p>
               </div>
             </div>
           </div>
