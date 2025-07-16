@@ -78,28 +78,39 @@ export function AppSidebar() {
               <img 
                 src="/lovable-uploads/18bd00ac-7312-4fae-9241-d12230e20fe4.png" 
                 alt="Xevon Logo" 
-                className="w-8 h-8 object-contain flex-shrink-0" 
+                className={`object-contain flex-shrink-0 transition-all duration-300 ${collapsed ? 'w-8 h-8' : 'w-8 h-8'}`}
               />
               {!collapsed && (
-                <div className="flex flex-col">
+                <div className="flex flex-col animate-fade-in">
                   <span className="font-bold text-lg text-foreground">Xevon</span>
                   <span className="text-xs text-muted-foreground">Automation Hub</span>
                 </div>
               )}
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleSidebar}
-              className="h-6 w-6 p-0 hover:bg-muted"
-            >
-              {collapsed ? (
-                <ChevronRight className="h-4 w-4" />
-              ) : (
+            {!collapsed && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleSidebar}
+                className="h-6 w-6 p-0 hover:bg-muted transition-all duration-200"
+              >
                 <ChevronLeft className="h-4 w-4" />
-              )}
-            </Button>
+              </Button>
+            )}
           </div>
+          {/* Collapsed toggle button */}
+          {collapsed && (
+            <div className="flex justify-center mt-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleSidebar}
+                className="h-6 w-6 p-0 hover:bg-muted transition-all duration-200"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Navigation Menu */}
@@ -119,17 +130,20 @@ export function AppSidebar() {
                       to={item.url} 
                       end 
                       className={`
-                        flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 group w-full
+                        flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group w-full relative overflow-hidden
                         ${active 
-                          ? "bg-black text-white font-medium shadow-sm" 
-                          : "text-foreground hover:bg-gray-600 hover:text-white hover:shadow-md"
+                          ? "bg-black text-white font-medium shadow-lg" 
+                          : "text-foreground hover:text-white"
                         }
                         ${collapsed ? "justify-center" : ""}
+                        before:absolute before:inset-0 before:bg-gradient-to-r before:from-gray-700 before:to-gray-600 
+                        before:opacity-0 before:transition-opacity before:duration-200 
+                        hover:before:opacity-100 before:-z-10
                       `}
                       title={collapsed ? item.title : undefined}
                     >
-                      <item.icon className="h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
-                      {!collapsed && <span className="truncate transition-all duration-300">{item.title}</span>}
+                      <item.icon className="h-5 w-5 flex-shrink-0 transition-all duration-200 group-hover:scale-110 relative z-10" />
+                      {!collapsed && <span className="truncate transition-all duration-200 relative z-10">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuItem>
                 );
@@ -156,17 +170,20 @@ export function AppSidebar() {
                         to={item.url} 
                         end 
                         className={`
-                          flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-300 group w-full
+                          flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group w-full relative overflow-hidden
                           ${active 
-                            ? "bg-black text-white font-medium shadow-sm" 
-                            : "text-foreground hover:bg-gray-600 hover:text-white hover:shadow-md"
+                            ? "bg-black text-white font-medium shadow-lg" 
+                            : "text-foreground hover:text-white"
                           }
                           ${collapsed ? "justify-center" : ""}
+                          before:absolute before:inset-0 before:bg-gradient-to-r before:from-gray-700 before:to-gray-600 
+                          before:opacity-0 before:transition-opacity before:duration-200 
+                          hover:before:opacity-100 before:-z-10
                         `}
                         title={collapsed ? item.title : undefined}
                       >
-                        <item.icon className="h-5 w-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
-                        {!collapsed && <span className="truncate transition-all duration-300">{item.title}</span>}
+                        <item.icon className="h-5 w-5 flex-shrink-0 transition-all duration-200 group-hover:scale-110 relative z-10" />
+                        {!collapsed && <span className="truncate transition-all duration-200 relative z-10">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuItem>
                   );
