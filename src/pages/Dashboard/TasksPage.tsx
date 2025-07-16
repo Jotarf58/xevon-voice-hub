@@ -1,21 +1,17 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
   Plus, 
   Search, 
-  Filter, 
   CheckSquare, 
   Clock,
   User,
   Calendar,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Eye
+  MoreHorizontal
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -30,73 +26,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TaskDetailsDialog } from '@/components/Dialogs/TaskDetailsDialog';
-import { TaskFormDialog } from '@/components/Dialogs/TaskFormDialog';
-import { useToast } from '@/hooks/use-toast';
 
 interface Task {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   status: 'pending' | 'in_progress' | 'completed';
   priority: 'low' | 'medium' | 'high';
-  assignee: string;
-  team: string;
+  assignee_id: string | null;
+  team: 'technical' | 'support' | 'sales' | 'management';
   category: string;
-  dueDate: string;
-  createdBy: string;
+  due_date: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export const TasksPage: React.FC = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  // Mock data - would come from webhooks in real app
-  const [tasks] = useState<Task[]>([
-    {
-      id: 'TSK-001',
-      title: 'Configurar webhook Twilio',
-      description: 'Implementar endpoint para receber eventos de chamadas',
-      status: 'in_progress',
-      priority: 'high',
-      assignee: 'João Silva',
-      team: 'Technical',
-      category: 'Integration',
-      dueDate: '2024-01-15',
-      createdBy: 'Admin User'
-    },
-    {
-      id: 'TSK-002',
-      title: 'Atualizar templates WhatsApp',
-      description: 'Revisar e otimizar templates de mensagens automáticas',
-      status: 'pending',
-      priority: 'medium',
-      assignee: 'Maria Santos',
-      team: 'Support',
-      category: 'Content',
-      dueDate: '2024-01-18',
-      createdBy: 'João Silva'
-    },
-    {
-      id: 'TSK-003',
-      title: 'Análise de performance ElevenLabs',
-      description: 'Revisar métricas de qualidade de voz gerada',
-      status: 'completed',
-      priority: 'low',
-      assignee: 'Pedro Costa',
-      team: 'Technical',
-      category: 'Analytics',
-      dueDate: '2024-01-10',
-      createdBy: 'Admin User'
-    }
-  ]);
+  // Mock data - will be replaced with real data from database
+  const [tasks] = useState<Task[]>([]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -128,7 +81,7 @@ export const TasksPage: React.FC = () => {
   const canViewTask = (task: Task) => {
     if (user?.role === 'developer') return true;
     if (user?.role === 'manager' && task.team === user.team) return true;
-    if (task.assignee === user?.name) return true;
+    if (task.assignee_id === user?.id) return true;
     return false;
   };
 
@@ -136,7 +89,7 @@ export const TasksPage: React.FC = () => {
     .filter(canViewTask)
     .filter(task => 
       task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchTerm.toLowerCase())
+      (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     .filter(task => filterStatus === 'all' || task.status === filterStatus)
     .filter(task => filterCategory === 'all' || task.category === filterCategory);
@@ -146,46 +99,6 @@ export const TasksPage: React.FC = () => {
     pending: filteredTasks.filter(t => t.status === 'pending').length,
     inProgress: filteredTasks.filter(t => t.status === 'in_progress').length,
     completed: filteredTasks.filter(t => t.status === 'completed').length
-  };
-
-  const handleViewDetails = (task: Task) => {
-    setSelectedTask(task);
-    setDetailsOpen(true);
-  };
-
-  const handleEdit = (task: Task) => {
-    setEditingTask(task);
-    setFormOpen(true);
-  };
-
-  const handleDelete = (taskId: string) => {
-    // Here you would typically make an API call to delete the task
-    toast({
-      title: "Tarefa eliminada",
-      description: "A tarefa foi eliminada com sucesso.",
-    });
-  };
-
-  const handleSave = (taskData: any) => {
-    if (editingTask) {
-      // Update existing task
-      toast({
-        title: "Tarefa actualizada",
-        description: "A tarefa foi actualizada com sucesso.",
-      });
-    } else {
-      // Create new task
-      toast({
-        title: "Tarefa criada",
-        description: "A nova tarefa foi criada com sucesso.",
-      });
-    }
-    setEditingTask(null);
-  };
-
-  const handleNewTask = () => {
-    setEditingTask(null);
-    setFormOpen(true);
   };
 
   return (
@@ -198,10 +111,7 @@ export const TasksPage: React.FC = () => {
             Gerencie suas tarefas e acompanhe o progresso da equipe
           </p>
         </div>
-        <Button 
-          className="bg-gradient-primary hover:bg-gradient-primary/90"
-          onClick={handleNewTask}
-        >
+        <Button className="bg-gradient-primary hover:bg-gradient-primary/90">
           <Plus className="mr-2 h-4 w-4" />
           Nova Tarefa
         </Button>
@@ -318,17 +228,21 @@ export const TasksPage: React.FC = () => {
                       {task.priority.toUpperCase()}
                     </Badge>
                   </div>
-                  <p className="text-muted-foreground mb-4">{task.description}</p>
+                  {task.description && (
+                    <p className="text-muted-foreground mb-4">{task.description}</p>
+                  )}
                   
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <User className="h-4 w-4" />
-                      <span>{task.assignee}</span>
+                      <span>Responsável: {task.assignee_id || 'Não atribuído'}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      <span>{new Date(task.dueDate).toLocaleDateString('pt-BR')}</span>
-                    </div>
+                    {task.due_date && (
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        <span>{new Date(task.due_date).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                    )}
                     <div>
                       <span className="font-medium">Equipe:</span> {task.team}
                     </div>
@@ -345,20 +259,8 @@ export const TasksPage: React.FC = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleViewDetails(task)}>
-                      <Eye className="mr-2 h-4 w-4" />
+                    <DropdownMenuItem>
                       Ver Detalhes
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleEdit(task)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="text-destructive"
-                      onClick={() => handleDelete(task.id)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Eliminar
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -373,34 +275,12 @@ export const TasksPage: React.FC = () => {
           <CardContent className="p-12 text-center">
             <CheckSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma tarefa encontrada</h3>
-            <p className="text-muted-foreground mb-4">
-              Não há tarefas que correspondam aos seus critérios de busca.
+            <p className="text-muted-foreground">
+              Conecte os dados da base de dados para ver as tarefas.
             </p>
-            <Button 
-              className="bg-gradient-primary hover:bg-gradient-primary/90"
-              onClick={handleNewTask}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Criar Nova Tarefa
-            </Button>
           </CardContent>
         </Card>
       )}
-
-      <TaskDetailsDialog
-        task={selectedTask}
-        open={detailsOpen}
-        onOpenChange={setDetailsOpen}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-
-      <TaskFormDialog
-        task={editingTask || undefined}
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        onSave={handleSave}
-      />
     </div>
   );
 };

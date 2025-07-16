@@ -7,18 +7,12 @@ import {
   Ticket, 
   Plus,
   Search,
-  Filter,
   MoreHorizontal,
   Clock,
   AlertTriangle,
   CheckCircle,
-  User,
-  Phone,
-  MessageSquare,
   Calendar
 } from 'lucide-react';
-import { TicketDetailsDialog } from '@/components/Dialogs/TicketDetailsDialog';
-import { TicketFormDialog } from '@/components/Dialogs/TicketFormDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,17 +30,17 @@ import {
 interface TicketType {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
+  type: 'bug' | 'feature_request' | 'support' | 'integration' | 'configuration';
   status: 'open' | 'in_progress' | 'proposed_solution' | 'closed';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  assignee: string;
-  team: string;
-  category: string;
-  source: 'call' | 'whatsapp' | 'manual';
-  customer: string;
-  customerPhone: string;
-  createdAt: string;
-  updatedAt: string;
+  priority: 'low' | 'medium' | 'high';
+  assignee_id: string | null;
+  reporter_id: string;
+  team: 'technical' | 'support' | 'sales' | 'management';
+  resolution: string | null;
+  resolved_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export const TicketsPage: React.FC = () => {
@@ -54,63 +48,13 @@ export const TicketsPage: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
   const [filterTeam, setFilterTeam] = useState('all');
-  const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingTicket, setEditingTicket] = useState<TicketType | null>(null);
 
-  const [tickets, setTickets] = useState<TicketType[]>([
-    {
-      id: 'tick-001',
-      title: 'Configuração de automação não funciona',
-      description: 'Cliente reporta que a automação criada não está a funcionar corretamente',
-      status: 'open',
-      priority: 'high',
-      assignee: 'João Silva',
-      team: 'Technical',
-      category: 'Automação',
-      source: 'call',
-      customer: 'António Costa',
-      customerPhone: '+351 912 345 678',
-      createdAt: '2024-01-13T10:30:00Z',
-      updatedAt: '2024-01-13T10:30:00Z'
-    },
-    {
-      id: 'tick-002',
-      title: 'Problema com integração WhatsApp',
-      description: 'Mensagens não estão a ser enviadas via WhatsApp Business API',
-      status: 'in_progress',
-      priority: 'urgent',
-      assignee: 'Maria Santos',
-      team: 'Support',
-      category: 'Integração',
-      source: 'whatsapp',
-      customer: 'Sofia Pereira',
-      customerPhone: '+351 963 789 012',
-      createdAt: '2024-01-13T09:15:00Z',
-      updatedAt: '2024-01-13T11:20:00Z'
-    },
-    {
-      id: 'tick-003',
-      title: 'Solicitação de nova funcionalidade',
-      description: 'Cliente quer adicionar suporte para Telegram na automação',
-      status: 'proposed_solution',
-      priority: 'medium',
-      assignee: 'Pedro Costa',
-      team: 'Technical',
-      category: 'Funcionalidade',
-      source: 'manual',
-      customer: 'Ricardo Oliveira',
-      customerPhone: '+351 934 567 890',
-      createdAt: '2024-01-12T16:45:00Z',
-      updatedAt: '2024-01-13T08:30:00Z'
-    }
-  ]);
+  // Mock data - will be replaced with real data from database
+  const [tickets] = useState<TicketType[]>([]);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'bg-red-100 text-red-800 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'high': return 'bg-red-100 text-red-800 border-red-200';
       case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'low': return 'bg-green-100 text-green-800 border-green-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -137,15 +81,6 @@ export const TicketsPage: React.FC = () => {
     }
   };
 
-  const getSourceIcon = (source: string) => {
-    switch (source) {
-      case 'call': return <Phone className="h-4 w-4" />;
-      case 'whatsapp': return <MessageSquare className="h-4 w-4" />;
-      case 'manual': return <User className="h-4 w-4" />;
-      default: return <Ticket className="h-4 w-4" />;
-    }
-  };
-
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'open': return 'Aberto';
@@ -158,7 +93,6 @@ export const TicketsPage: React.FC = () => {
 
   const getPriorityLabel = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'Urgente';
       case 'high': return 'Alta';
       case 'medium': return 'Média';
       case 'low': return 'Baixa';
@@ -166,11 +100,21 @@ export const TicketsPage: React.FC = () => {
     }
   };
 
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'bug': return 'Bug';
+      case 'feature_request': return 'Nova Funcionalidade';
+      case 'support': return 'Suporte';
+      case 'integration': return 'Integração';
+      case 'configuration': return 'Configuração';
+      default: return type;
+    }
+  };
+
   const filteredTickets = tickets
     .filter(ticket => 
       ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.description.toLowerCase().includes(searchTerm.toLowerCase())
+      (ticket.description && ticket.description.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     .filter(ticket => filterStatus === 'all' || ticket.status === filterStatus)
     .filter(ticket => filterPriority === 'all' || ticket.priority === filterPriority)
@@ -184,41 +128,6 @@ export const TicketsPage: React.FC = () => {
     closed: filteredTickets.filter(t => t.status === 'closed').length
   };
 
-  const handleNewTicket = () => {
-    setEditingTicket(null);
-    setFormOpen(true);
-  };
-
-  const handleEdit = (ticket: TicketType) => {
-    setEditingTicket(ticket);
-    setFormOpen(true);
-  };
-
-  const handleDelete = (ticketId: string) => {
-    setTickets(tickets.filter(t => t.id !== ticketId));
-  };
-
-  const handleSave = (ticketData: any) => {
-    if (editingTicket) {
-      const updatedTicket = {
-        ...editingTicket,
-        ...ticketData,
-        updatedAt: new Date().toISOString()
-      };
-      setTickets(tickets.map(t => t.id === editingTicket.id ? updatedTicket : t));
-    } else {
-      const newTicket = {
-        ...ticketData,
-        id: `tick-${tickets.length + 1}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      setTickets([...tickets, newTicket]);
-    }
-    setFormOpen(false);
-    setEditingTicket(null);
-  };
-
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -229,10 +138,7 @@ export const TicketsPage: React.FC = () => {
             Gerir tickets de suporte e solicitações de clientes
           </p>
         </div>
-        <Button 
-          onClick={handleNewTicket}
-          className="bg-gradient-primary text-primary-foreground"
-        >
+        <Button className="bg-gradient-primary text-primary-foreground">
           <Plus className="mr-2 h-4 w-4" />
           Novo Ticket
         </Button>
@@ -309,7 +215,7 @@ export const TicketsPage: React.FC = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por título, cliente ou descrição..."
+                  placeholder="Buscar por título ou descrição..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -334,7 +240,6 @@ export const TicketsPage: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as Prioridades</SelectItem>
-                <SelectItem value="urgent">Urgente</SelectItem>
                 <SelectItem value="high">Alta</SelectItem>
                 <SelectItem value="medium">Média</SelectItem>
                 <SelectItem value="low">Baixa</SelectItem>
@@ -346,9 +251,10 @@ export const TicketsPage: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas as Equipas</SelectItem>
-                <SelectItem value="Technical">Técnica</SelectItem>
-                <SelectItem value="Support">Suporte</SelectItem>
-                <SelectItem value="Sales">Vendas</SelectItem>
+                <SelectItem value="technical">Técnica</SelectItem>
+                <SelectItem value="support">Suporte</SelectItem>
+                <SelectItem value="sales">Vendas</SelectItem>
+                <SelectItem value="management">Gestão</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -378,35 +284,36 @@ export const TicketsPage: React.FC = () => {
                     </Badge>
                   </div>
                   
-                  <p className="text-muted-foreground mb-3 line-clamp-2">
-                    {ticket.description}
-                  </p>
+                  {ticket.description && (
+                    <p className="text-muted-foreground mb-3 line-clamp-2">
+                      {ticket.description}
+                    </p>
+                  )}
                   
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-3">
                     <div className="flex items-center gap-1">
-                      <User className="h-4 w-4" />
-                      <span>{ticket.customer} ({ticket.customerPhone})</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {getSourceIcon(ticket.source)}
-                      <span>Origem: {ticket.source === 'call' ? 'Chamada' : ticket.source === 'whatsapp' ? 'WhatsApp' : 'Manual'}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      <span>{new Date(ticket.createdAt).toLocaleString('pt-BR')}</span>
+                      <span>{new Date(ticket.created_at).toLocaleString('pt-BR')}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Tipo:</span> {getTypeLabel(ticket.type)}
+                    </div>
+                    <div>
+                      <span className="font-medium">Equipa:</span> {ticket.team}
                     </div>
                   </div>
                   
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                      👤 {ticket.assignee}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                      🏢 {ticket.team}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                      📂 {ticket.category}
-                    </Badge>
+                    {ticket.assignee_id && (
+                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                        👤 Atribuído
+                      </Badge>
+                    )}
+                    {ticket.resolution && (
+                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                        ✅ Resolvido
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 
@@ -417,20 +324,9 @@ export const TicketsPage: React.FC = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => {
-                      setSelectedTicket(ticket);
-                      setDetailsOpen(true);
-                    }}>
+                    <DropdownMenuItem>
                       <Ticket className="mr-2 h-4 w-4" />
                       Ver Detalhes
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleEdit(ticket)}>
-                      <Calendar className="mr-2 h-4 w-4" />
-                      Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDelete(ticket.id)} className="text-red-600">
-                      <AlertTriangle className="mr-2 h-4 w-4" />
-                      Eliminar
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -445,34 +341,12 @@ export const TicketsPage: React.FC = () => {
           <CardContent className="p-12 text-center">
             <Ticket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum ticket encontrado</h3>
-            <p className="text-muted-foreground mb-4">
-              Não há tickets que correspondam aos seus critérios de busca.
+            <p className="text-muted-foreground">
+              Conecte os dados da base de dados para ver os tickets.
             </p>
-            <Button 
-              onClick={handleNewTicket}
-              className="bg-gradient-primary text-primary-foreground"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Criar Novo Ticket
-            </Button>
           </CardContent>
         </Card>
       )}
-
-      <TicketDetailsDialog
-        ticket={selectedTicket}
-        open={detailsOpen}
-        onOpenChange={setDetailsOpen}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-
-      <TicketFormDialog
-        ticket={editingTicket || undefined}
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        onSave={handleSave}
-      />
     </div>
   );
 };
