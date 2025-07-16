@@ -130,15 +130,12 @@ export function AppSidebar() {
                       to={item.url} 
                       end 
                       className={`
-                        flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group w-full relative overflow-hidden
+                        flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 w-full relative
                         ${active 
                           ? "bg-black text-white font-medium shadow-lg" 
-                          : "text-foreground hover:text-white"
+                          : "text-foreground hover:bg-nav-hover hover:text-nav-hover-foreground"
                         }
                         ${collapsed ? "justify-center" : ""}
-                        before:absolute before:inset-0 before:bg-gradient-to-r before:from-gray-700 before:to-gray-600 
-                        before:opacity-0 before:transition-opacity before:duration-200 
-                        hover:before:opacity-100 before:-z-10
                       `}
                       title={collapsed ? item.title : undefined}
                     >
@@ -166,22 +163,19 @@ export function AppSidebar() {
                   const active = isActive(item.url);
                   return (
                     <SidebarMenuItem key={item.title}>
-                      <NavLink 
-                        to={item.url} 
-                        end 
-                        className={`
-                          flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group w-full relative overflow-hidden
-                          ${active 
-                            ? "bg-black text-white font-medium shadow-lg" 
-                            : "text-foreground hover:text-white"
-                          }
-                          ${collapsed ? "justify-center" : ""}
-                          before:absolute before:inset-0 before:bg-gradient-to-r before:from-gray-700 before:to-gray-600 
-                          before:opacity-0 before:transition-opacity before:duration-200 
-                          hover:before:opacity-100 before:-z-10
-                        `}
-                        title={collapsed ? item.title : undefined}
-                      >
+                       <NavLink 
+                         to={item.url} 
+                         end 
+                         className={`
+                           flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 w-full relative
+                           ${active 
+                             ? "bg-black text-white font-medium shadow-lg" 
+                             : "text-foreground hover:bg-nav-hover hover:text-nav-hover-foreground"
+                           }
+                           ${collapsed ? "justify-center" : ""}
+                         `}
+                         title={collapsed ? item.title : undefined}
+                       >
                         <item.icon className="h-5 w-5 flex-shrink-0 transition-all duration-200 group-hover:scale-110 relative z-10" />
                         {!collapsed && <span className="truncate transition-all duration-200 relative z-10">{item.title}</span>}
                       </NavLink>
