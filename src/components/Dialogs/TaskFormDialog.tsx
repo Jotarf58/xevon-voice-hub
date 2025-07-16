@@ -156,9 +156,10 @@ export const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
                   <SelectValue placeholder="Selecione a equipa" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Technical">Technical</SelectItem>
-                  <SelectItem value="Support">Support</SelectItem>
-                  <SelectItem value="Sales">Sales</SelectItem>
+                  <SelectItem value="technical">Technical</SelectItem>
+                  <SelectItem value="support">Support</SelectItem>
+                  <SelectItem value="sales">Sales</SelectItem>
+                  <SelectItem value="management">Management</SelectItem>
                 </SelectContent>
               </Select>
             </div>

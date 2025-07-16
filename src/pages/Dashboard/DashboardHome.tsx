@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDashboardStats, useRecentTickets } from '@/hooks/useSupabaseData';
+import { useDashboardStats, useRecentTickets, useInitializeDemoData } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,9 @@ export const DashboardHome: React.FC = () => {
   const navigate = useNavigate();
   const { stats: dbStats, loading: statsLoading } = useDashboardStats();
   const { recentTickets, loading: ticketsLoading } = useRecentTickets();
+  
+  // Inicializar dados de demonstração para novos utilizadores
+  useInitializeDemoData();
 
   const stats = [
     {

@@ -273,6 +273,31 @@ export function useUsers() {
   return { users, loading, error, refetch };
 }
 
+// Hook para inserir dados de demonstração para novos utilizadores
+export function useInitializeDemoData() {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const initializeDemoData = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { error } = await supabase.rpc('insert_demo_data_for_user', {
+          new_user_id: user.id
+        });
+        
+        if (error) {
+          console.error('Erro ao inicializar dados de demonstração:', error);
+        }
+      } catch (err) {
+        console.error('Erro ao chamar função de dados de demonstração:', err);
+      }
+    };
+
+    initializeDemoData();
+  }, [user?.id]);
+}
+
 // Hook para criar/atualizar tarefas
 export function useTaskOperations() {
   const { user } = useAuth();
