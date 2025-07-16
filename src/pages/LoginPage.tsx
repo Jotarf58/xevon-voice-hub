@@ -29,9 +29,9 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
-    const success = await login(email, password);
+    const result = await login(email, password);
     
-    if (success) {
+    if (result.success) {
       toast({
         title: "Login realizado com sucesso!",
         description: "Bem-vindo de volta à Xevon.",
@@ -40,7 +40,7 @@ export const LoginPage: React.FC = () => {
     } else {
       toast({
         title: "Erro no login",
-        description: "Email ou password incorretos. Tente novamente.",
+        description: result.error || "Email ou password incorretos. Tente novamente.",
         variant: "destructive",
       });
     }

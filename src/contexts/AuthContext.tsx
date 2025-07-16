@@ -85,14 +85,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        setIsLoading(false);
         return { success: false, error: error.message };
       }
 
+      // Don't set loading to false here - let the auth state change handle it
       return { success: true };
     } catch (error) {
-      return { success: false, error: 'Erro inesperado ao fazer login' };
-    } finally {
       setIsLoading(false);
+      return { success: false, error: 'Erro inesperado ao fazer login' };
     }
   };
 
