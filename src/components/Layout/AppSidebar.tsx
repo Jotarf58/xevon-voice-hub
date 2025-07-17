@@ -67,7 +67,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar 
-      className={`${collapsed ? "w-30" : "w-64"} border-r border-border bg-card transition-all duration-300`}
+      className={`${collapsed ? "w-20" : "w-64"} border-r border-border bg-card transition-all duration-300`}
       collapsible="icon"
     >
       <SidebarContent className="flex flex-col h-full">
@@ -78,7 +78,7 @@ export function AppSidebar() {
               <img 
                 src="/lovable-uploads/18bd00ac-7312-4fae-9241-d12230e20fe4.png" 
                 alt="Xevon Logo" 
-                className={`object-contain flex-shrink-0 ${collapsed ? 'w-16 h-16' : 'w-8 h-8'}`}
+                className="object-contain flex-shrink-0 w-8 h-8"
               />
               {!collapsed && (
                 <div className="flex flex-col animate-fade-in">
@@ -126,22 +126,22 @@ export function AppSidebar() {
                 const active = isActive(item.url);
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <NavLink 
-                      to={item.url} 
-                      end 
-                      className={`
-                        flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 w-full relative
-                        ${active 
-                          ? "bg-black text-white font-medium shadow-lg" 
-                          : "text-foreground hover:bg-nav-hover hover:text-nav-hover-foreground"
-                        }
-                        ${collapsed ? "justify-center" : ""}
-                      `}
-                      title={collapsed ? item.title : undefined}
-                    >
-                      <item.icon className="h-5 w-5 flex-shrink-0 transition-all duration-200 group-hover:scale-110 relative z-10" />
-                      {!collapsed && <span className="truncate transition-all duration-200 relative z-10">{item.title}</span>}
-                    </NavLink>
+                     <NavLink 
+                       to={item.url} 
+                       end 
+                       className={`
+                         flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 w-full relative
+                         ${active 
+                           ? "bg-black text-white font-medium shadow-lg" 
+                           : "text-foreground hover:bg-nav-hover hover:text-nav-hover-foreground"
+                         }
+                         ${collapsed ? "justify-center px-2" : ""}
+                       `}
+                       title={collapsed ? item.title : undefined}
+                     >
+                       <item.icon className="h-5 w-5 flex-shrink-0" />
+                       {!collapsed && <span className="truncate">{item.title}</span>}
+                     </NavLink>
                   </SidebarMenuItem>
                 );
               })}
@@ -172,12 +172,12 @@ export function AppSidebar() {
                              ? "bg-black text-white font-medium shadow-lg" 
                              : "text-foreground hover:bg-nav-hover hover:text-nav-hover-foreground"
                            }
-                           ${collapsed ? "justify-center" : ""}
+                           ${collapsed ? "justify-center px-2" : ""}
                          `}
                          title={collapsed ? item.title : undefined}
                        >
-                        <item.icon className="h-5 w-5 flex-shrink-0 transition-all duration-200 group-hover:scale-110 relative z-10" />
-                        {!collapsed && <span className="truncate transition-all duration-200 relative z-10">{item.title}</span>}
+                        <item.icon className="h-5 w-5 flex-shrink-0" />
+                        {!collapsed && <span className="truncate">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuItem>
                   );
