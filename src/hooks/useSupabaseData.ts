@@ -236,14 +236,18 @@ export function useUsers() {
     try {
       setLoading(true);
       setError(null);
+      console.log('Fetching users from profiles table...');
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
+      console.log('Users query result:', { data, error });
       if (error) throw error;
       setUsers(data || []);
+      console.log('Users loaded:', data?.length || 0);
     } catch (err) {
+      console.error('Error fetching users:', err);
       setError(err instanceof Error ? err.message : 'Erro ao carregar utilizadores');
       setUsers([]);
     } finally {
