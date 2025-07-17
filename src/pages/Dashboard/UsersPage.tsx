@@ -369,34 +369,6 @@ export const UsersPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
-                <div className="flex items-center gap-2">
-                  <div className="text-right text-sm text-muted-foreground">
-                    <p>Criado em:</p>
-                    <p>{new Date(user.created_at).toLocaleDateString('pt-BR')}</p>
-                  </div>
-                  
-                  {canManageUsers && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewUser(user); }}>
-                          <Users className="mr-2 h-4 w-4" />
-                          Ver Detalhes
-                        </DropdownMenuItem>
-                        {user.id !== currentUser?.id && (
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditUser(user); }}>
-                            Editar
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
               </div>
             </CardContent>
           </Card>
