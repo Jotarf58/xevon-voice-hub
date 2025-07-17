@@ -86,6 +86,23 @@ serve(async (req) => {
       )
     }
 
+    // Check if user with this email already exists
+    const { data: existingProfile, error: checkError } = await supabaseAdmin
+      .from('profiles')
+      .select('email')
+      .eq('email', email)
+      .single()
+
+    if (existingProfile) {
+      return new Response(
+        JSON.stringify({ error: 'User with this email already exists' }),
+        { 
+          status: 409, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
     // Validate role permissions
     if (profile.role === 'manager' && !['user'].includes(role)) {
       return new Response(
@@ -96,6 +113,8 @@ serve(async (req) => {
         }
       )
     }
+
+    console.log(`Creating user with email: ${email}, role: ${role}, team: ${team}`);
 
     // Create the user in Supabase Auth
     const { data: authData, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
@@ -108,6 +127,7 @@ serve(async (req) => {
     })
 
     if (createUserError) {
+      console.error('Auth user creation error:', createUserError)
       return new Response(
         JSON.stringify({ error: createUserError.message }),
         { 
@@ -118,6 +138,7 @@ serve(async (req) => {
     }
 
     if (!authData.user) {
+      console.error('No user returned from auth creation')
       return new Response(
         JSON.stringify({ error: 'Failed to create user' }),
         { 
@@ -126,6 +147,8 @@ serve(async (req) => {
         }
       )
     }
+
+    console.log(`Auth user created with ID: ${authData.user.id}`);
 
     // Create the profile
     const { data: profileData, error: profileCreateError } = await supabaseAdmin
@@ -142,6 +165,7 @@ serve(async (req) => {
       .single()
 
     if (profileCreateError) {
+      console.error('Profile creation error:', profileCreateError)
       // If profile creation fails, clean up the auth user
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
       
@@ -153,6 +177,8 @@ serve(async (req) => {
         }
       )
     }
+
+    console.log('Profile created successfully:', profileData)
 
     return new Response(
       JSON.stringify({ 
@@ -166,6 +192,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
+    console.error('Unexpected error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
