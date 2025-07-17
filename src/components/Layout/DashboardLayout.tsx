@@ -11,8 +11,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full bg-gradient-background">
         <AppSidebar />
-        <main className="flex-1 transition-all duration-300">
-          <div className="h-screen overflow-y-auto p-6">
+        <main className="flex-1 transition-all duration-300 min-w-0">
+          <div className="h-screen overflow-y-auto p-6 w-full">
             {children}
           </div>
         </main>
