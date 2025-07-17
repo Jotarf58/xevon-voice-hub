@@ -197,33 +197,49 @@ export const MessageDetailsDialog: React.FC<MessageDetailsDialogProps> = ({
 
           <Separator />
 
-          <div className="flex justify-between">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                onConvertToTicket(message);
-                onOpenChange(false);
-              }}
-            >
-              <Ticket className="mr-2 h-4 w-4" />
-              Converter em Ticket
-            </Button>
-            
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => onEdit(message)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Editar
-              </Button>
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-semibold mb-2">Responder à Mensagem</h3>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="Digite sua resposta..."
+                  className="flex-1 px-3 py-2 border border-input bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-md"
+                />
+                <Button>
+                  Enviar
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex justify-between">
               <Button 
-                variant="destructive" 
+                variant="outline" 
                 onClick={() => {
-                  onDelete(message.id);
+                  onConvertToTicket(message);
                   onOpenChange(false);
                 }}
               >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Eliminar
+                <Ticket className="mr-2 h-4 w-4" />
+                Converter em Ticket
               </Button>
+              
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => onEdit(message)}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Editar
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={() => {
+                    onDelete(message.id);
+                    onOpenChange(false);
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Eliminar
+                </Button>
+              </div>
             </div>
           </div>
         </div>
