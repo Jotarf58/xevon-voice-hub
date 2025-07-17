@@ -9,9 +9,9 @@ interface DashboardLayoutProps {
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen flex w-full bg-gradient-background">
+      <div className="min-h-screen flex w-full bg-gradient-background relative">
         <AppSidebar />
-        <main className="flex-1 transition-all duration-300 min-w-0">
+        <main className="flex-1 transition-all duration-300 min-w-0 w-full">
           <div className="h-screen overflow-y-auto p-6 w-full">
             {children}
           </div>
