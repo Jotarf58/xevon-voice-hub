@@ -13,11 +13,11 @@ const DashboardContent: React.FC<{ children: React.ReactNode }> = ({ children })
   return (
     <main 
       className={`
-        flex-1 transition-all duration-300 min-w-0
-        ${collapsed ? 'ml-0' : 'ml-0'}
+        transition-all duration-300 h-screen overflow-hidden
+        ${collapsed ? 'w-[calc(100vw-5rem)]' : 'w-[calc(100vw-16rem)]'}
       `}
     >
-      <div className="h-screen overflow-y-auto p-6">
+      <div className="h-full overflow-y-auto p-6">
         {children}
       </div>
     </main>
