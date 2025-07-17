@@ -42,13 +42,7 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
 }) => {
   const { user } = useAuth();
   const { register, handleSubmit, setValue, watch, reset } = useForm<UserFormData>({
-    defaultValues: userProfile ? {
-      name: userProfile.name,
-      email: userProfile.email,
-      role: userProfile.role,
-      team: userProfile.team,
-      avatar_url: userProfile.avatar_url || ''
-    } : {
+    defaultValues: {
       name: '',
       email: '',
       role: 'user' as const,
@@ -56,6 +50,25 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
       avatar_url: ''
     }
   });
+  
+  // Update form values when userProfile changes
+  React.useEffect(() => {
+    if (userProfile) {
+      setValue('name', userProfile.name);
+      setValue('email', userProfile.email);
+      setValue('role', userProfile.role);
+      setValue('team', userProfile.team);
+      setValue('avatar_url', userProfile.avatar_url || '');
+    } else {
+      reset({
+        name: '',
+        email: '',
+        role: 'user',
+        team: 'support',
+        avatar_url: ''
+      });
+    }
+  }, [userProfile, setValue, reset]);
 
   const role = watch('role');
   const team = watch('team');

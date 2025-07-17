@@ -86,6 +86,7 @@ export const UsersPage: React.FC = () => {
           body: JSON.stringify({
             id: selectedUser.id,
             name: userData.name,
+            email: userData.email,
             role: userData.role,
             team: userData.team,
             avatar_url: userData.avatar_url
@@ -415,8 +416,12 @@ export const UsersPage: React.FC = () => {
 
       {/* Dialog de Criação de Utilizador */}
       <UserFormDialog 
+        userProfile={selectedUser}
         open={isFormDialogOpen}
-        onOpenChange={setIsFormDialogOpen}
+        onOpenChange={(open) => {
+          setIsFormDialogOpen(open);
+          if (!open) setSelectedUser(null); // Reset selected user when dialog closes
+        }}
         onSave={handleSaveUser}
       />
     </div>

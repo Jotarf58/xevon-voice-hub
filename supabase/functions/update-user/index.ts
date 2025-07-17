@@ -74,7 +74,7 @@ serve(async (req) => {
     }
 
     // Parse the request body
-    const { id, name, role, team, avatar_url } = await req.json()
+    const { id, name, email, role, team, avatar_url } = await req.json()
 
     if (!id) {
       return new Response(
@@ -104,6 +104,7 @@ serve(async (req) => {
       .from('profiles')
       .update({
         name,
+        email,
         role,
         team,
         avatar_url: avatar_url || null,
