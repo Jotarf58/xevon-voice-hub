@@ -73,8 +73,8 @@ export function AppSidebar() {
       <SidebarContent className="flex flex-col h-full">
         {/* Header with Logo and Toggle */}
         <div className="p-4 border-b border-border">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'}`}>
+            <div className={`flex items-center gap-3 ${collapsed ? 'justify-center w-full' : ''}`}>
               <img 
                 src="/lovable-uploads/18bd00ac-7312-4fae-9241-d12230e20fe4.png" 
                 alt="Xevon Logo" 
