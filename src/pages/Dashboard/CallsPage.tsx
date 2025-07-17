@@ -273,7 +273,7 @@ export const CallsPage: React.FC = () => {
       {!loading && !error && (
         <div className="space-y-4">
           {filteredCalls.map((call) => (
-          <Card key={call.id} className="border-2 hover:shadow-card transition-all duration-200">
+          <Card key={call.id} className="border-2 hover:shadow-card transition-all duration-200 cursor-pointer" onClick={() => handleViewCall(call)}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -322,17 +322,17 @@ export const CallsPage: React.FC = () => {
                 </div>
                 
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                     <Button variant="ghost" size="sm">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                    <DropdownMenuContent align="end">
-                     <DropdownMenuItem onClick={() => handleViewCall(call)}>
+                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewCall(call); }}>
                        <FileText className="mr-2 h-4 w-4" />
                        Ver Detalhes
                      </DropdownMenuItem>
-                     <DropdownMenuItem onClick={() => handleEditCall(call)}>
+                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditCall(call); }}>
                        <Edit className="mr-2 h-4 w-4" />
                        Editar
                      </DropdownMenuItem>

@@ -358,7 +358,7 @@ export const TicketsPage: React.FC = () => {
       {!loading && !error && (
         <div className="space-y-4">
           {filteredTickets.map((ticket) => (
-          <Card key={ticket.id} className="border-2 hover:shadow-card transition-all duration-200">
+          <Card key={ticket.id} className="border-2 hover:shadow-card transition-all duration-200 cursor-pointer" onClick={() => handleViewTicket(ticket)}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -412,22 +412,22 @@ export const TicketsPage: React.FC = () => {
                 </div>
                 
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                     <Button variant="ghost" size="sm">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                    <DropdownMenuContent align="end">
-                     <DropdownMenuItem onClick={() => handleViewTicket(ticket)}>
+                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewTicket(ticket); }}>
                        <Ticket className="mr-2 h-4 w-4" />
                        Ver Detalhes
                      </DropdownMenuItem>
-                     <DropdownMenuItem onClick={() => handleEditTicket(ticket)}>
+                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditTicket(ticket); }}>
                        <Edit className="mr-2 h-4 w-4" />
                        Editar
                      </DropdownMenuItem>
                      {ticket.status !== 'closed' && (
-                       <DropdownMenuItem onClick={() => handleCloseTicket(ticket.id)}>
+                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleCloseTicket(ticket.id); }}>
                          <X className="mr-2 h-4 w-4" />
                          Fechar Ticket
                        </DropdownMenuItem>
