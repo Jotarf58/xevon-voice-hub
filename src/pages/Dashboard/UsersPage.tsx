@@ -28,6 +28,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUsers } from '@/hooks/useSupabaseData';
 import { UserDetailsDialog } from '@/components/Dialogs/UserDetailsDialog';
 import { UserFormDialog } from '@/components/Dialogs/UserFormDialog';
+import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 interface User {
@@ -104,7 +105,11 @@ export const UsersPage: React.FC = () => {
         
         // Show success message
         console.log('Utilizador atualizado com sucesso:', result.user);
-        alert('Utilizador atualizado com sucesso!');
+        toast({
+          title: "Sucesso!",
+          description: "Utilizador atualizado com sucesso!",
+          variant: "default",
+        });
       } else {
         // This is a create operation
         const response = await fetch(`https://dzscouyoqscqdixlwrlm.supabase.co/functions/v1/create-user`, {
@@ -134,7 +139,11 @@ export const UsersPage: React.FC = () => {
         
         // Show success message
         console.log('Utilizador criado com sucesso:', result.user);
-        alert('Utilizador criado com sucesso!');
+        toast({
+          title: "Sucesso!",
+          description: "Utilizador criado com sucesso!",
+          variant: "default",
+        });
       }
       
       // Reset selected user
@@ -142,7 +151,11 @@ export const UsersPage: React.FC = () => {
       
     } catch (error) {
       console.error('Erro ao salvar utilizador:', error);
-      alert(`Erro ao salvar utilizador: ${error.message}`);
+      toast({
+        title: "Erro!",
+        description: `Erro ao salvar utilizador: ${error.message}`,
+        variant: "destructive",
+      });
       throw error;
     }
   };
