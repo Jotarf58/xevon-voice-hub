@@ -66,39 +66,46 @@ export const UsersPage: React.FC = () => {
 
   const handleCreateUser = async (userData: any) => {
     try {
-      // First create the auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: userData.email,
-        password: 'temp123456', // Temporary password - user should change it
-        email_confirm: true,
-        user_metadata: {
-          name: userData.name
-        }
-      });
+      // Get the current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('No active session');
+      }
 
-      if (authError) throw authError;
-
-      // Then create the profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: authData.user.id,
+      // Call the edge function to create user
+      const response = await fetch(`https://dzscouyoqscqdixlwrlm.supabase.co/functions/v1/create-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6c2NvdXlvcXNjcWRpeGx3cmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1MTE4MjcsImV4cCI6MjA2ODA4NzgyN30.YFTuB3xSf6f6ebTBSkVLUT4vrm-vBxABo7MpG84zWZc'
+        },
+        body: JSON.stringify({
           name: userData.name,
           email: userData.email,
           role: userData.role,
           team: userData.team,
-          avatar_url: userData.avatar_url || null
-        });
+          avatar_url: userData.avatar_url
+        })
+      });
 
-      if (profileError) throw profileError;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create user');
+      }
 
       // Refresh the users list
       refetch();
       
       // Show success message
-      console.log('Utilizador criado com sucesso');
+      console.log('Utilizador criado com sucesso:', result.user);
+      alert('Utilizador criado com sucesso!');
+      
     } catch (error) {
       console.error('Erro ao criar utilizador:', error);
+      alert(`Erro ao criar utilizador: ${error.message}`);
       throw error;
     }
   };
