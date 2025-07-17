@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SimpleMessageDetailsDialog } from '@/components/Dialogs/SimpleMessageDetailsDialog';
 
 interface Message {
   id: string;
@@ -46,9 +47,16 @@ interface Message {
 export const MessagesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<any>(null);
 
   // Real data from database
   const { messages, loading, error } = useMessages();
+
+  const handleViewMessage = (message: any) => {
+    setSelectedMessage(message);
+    setIsDetailsOpen(true);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -215,7 +223,7 @@ export const MessagesPage: React.FC = () => {
       {!loading && !error && (
         <div className="space-y-4">
           {filteredMessages.map((message) => (
-          <Card key={message.id} className="border-2 hover:shadow-card transition-all duration-200">
+          <Card key={message.id} className="border-2 hover:shadow-card transition-all duration-200 cursor-pointer" onClick={() => handleViewMessage(message)}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -265,13 +273,13 @@ export const MessagesPage: React.FC = () => {
                 </div>
                 
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                     <Button variant="ghost" size="sm">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewMessage(message); }}>
                       <MessageSquare className="mr-2 h-4 w-4" />
                       Ver Detalhes
                     </DropdownMenuItem>
@@ -297,6 +305,13 @@ export const MessagesPage: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Dialog de Detalhes */}
+      <SimpleMessageDetailsDialog
+        message={selectedMessage}
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+      />
     </div>
   );
 };
