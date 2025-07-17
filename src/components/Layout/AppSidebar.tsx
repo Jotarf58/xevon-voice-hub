@@ -78,7 +78,7 @@ export function AppSidebar() {
               <img 
                 src="/lovable-uploads/18bd00ac-7312-4fae-9241-d12230e20fe4.png" 
                 alt="Xevon Logo" 
-                className={`object-contain flex-shrink-0 transition-all duration-300 ${collapsed ? 'w-8 h-8' : 'w-8 h-8'}`}
+                className="object-contain flex-shrink-0 w-8 h-8"
               />
               {!collapsed && (
                 <div className="flex flex-col animate-fade-in">
