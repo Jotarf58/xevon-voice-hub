@@ -74,30 +74,13 @@ serve(async (req) => {
     }
 
     // Parse the request body
-    const { name, email, role, team, avatar_url } = await req.json()
+    const { id, name, role, team, avatar_url } = await req.json()
 
-    if (!name || !email || !role || !team) {
+    if (!id) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
+        JSON.stringify({ error: 'Missing user ID' }),
         { 
           status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
-
-    // Check if user with this email already exists
-    const { data: existingProfile, error: checkError } = await supabaseAdmin
-      .from('profiles')
-      .select('email')
-      .eq('email', email)
-      .single()
-
-    if (existingProfile) {
-      return new Response(
-        JSON.stringify({ error: 'User with this email already exists' }),
-        { 
-          status: 409, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
@@ -106,7 +89,7 @@ serve(async (req) => {
     // Validate role permissions
     if (profile.role === 'manager' && !['user'].includes(role)) {
       return new Response(
-        JSON.stringify({ error: 'Managers can only create users' }),
+        JSON.stringify({ error: 'Managers can only modify user accounts' }),
         { 
           status: 403, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -114,24 +97,26 @@ serve(async (req) => {
       )
     }
 
-    console.log(`Creating user with email: ${email}, role: ${role}, team: ${team}`);
+    console.log(`Updating user with ID: ${id}, name: ${name}, role: ${role}, team: ${team}`);
 
-    // Create the user in Supabase Auth
-    const { data: authData, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password: Math.random().toString(36).slice(-8) + 'Temp!123', // Temporary password
-      email_confirm: true,
-      user_metadata: {
+    // Update the profile
+    const { data: updatedProfile, error: updateError } = await supabaseAdmin
+      .from('profiles')
+      .update({
         name,
         role,
-        team
-      }
-    })
+        team,
+        avatar_url: avatar_url || null,
+        updated_at: new Date()
+      })
+      .eq('id', id)
+      .select()
+      .single()
 
-    if (createUserError) {
-      console.error('Auth user creation error:', createUserError)
+    if (updateError) {
+      console.error('Profile update error:', updateError)
       return new Response(
-        JSON.stringify({ error: createUserError.message }),
+        JSON.stringify({ error: updateError.message }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -139,52 +124,12 @@ serve(async (req) => {
       )
     }
 
-    if (!authData.user) {
-      console.error('No user returned from auth creation')
-      return new Response(
-        JSON.stringify({ error: 'Failed to create user' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
-
-    console.log(`Auth user created with ID: ${authData.user.id}`);
-
-    // Let the database trigger create the profile
-    console.log('Auth user created, the handle_new_user trigger will create the profile');
-    
-    // Wait a moment for the trigger to create the profile
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Fetch the created profile
-    const { data: profileData, error: fetchProfileError } = await supabaseAdmin
-      .from('profiles')
-      .select('*')
-      .eq('user_id', authData.user.id)
-      .single();
-    
-    if (fetchProfileError) {
-      console.error('Error fetching profile:', fetchProfileError);
-      // If fetching profile fails, clean up the auth user
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      
-      return new Response(
-        JSON.stringify({ error: 'Failed to create user profile' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    console.log('Profile created successfully:', profileData)
+    console.log('Profile updated successfully:', updatedProfile)
 
     return new Response(
       JSON.stringify({ 
-        message: 'User created successfully',
-        user: profileData
+        message: 'User updated successfully',
+        user: updatedProfile
       }),
       { 
         status: 200, 

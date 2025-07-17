@@ -59,12 +59,13 @@ export const UsersPage: React.FC = () => {
     setIsDetailsOpen(true);
   };
 
-  const handleEditUser = (user: any) => {
-    // TODO: Implementar edição de utilizador
+  const handleEditUser = async (user: any) => {
     console.log('Editar utilizador:', user);
+    setSelectedUser(user);
+    setIsFormDialogOpen(true);
   };
 
-  const handleCreateUser = async (userData: any) => {
+  const handleSaveUser = async (userData: any) => {
     try {
       // Get the current session
       const { data: { session } } = await supabase.auth.getSession();
@@ -73,39 +74,74 @@ export const UsersPage: React.FC = () => {
         throw new Error('No active session');
       }
 
-      // Call the edge function to create user
-      const response = await fetch(`https://dzscouyoqscqdixlwrlm.supabase.co/functions/v1/create-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6c2NvdXlvcXNjcWRpeGx3cmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1MTE4MjcsImV4cCI6MjA2ODA4NzgyN30.YFTuB3xSf6f6ebTBSkVLUT4vrm-vBxABo7MpG84zWZc'
-        },
-        body: JSON.stringify({
-          name: userData.name,
-          email: userData.email,
-          role: userData.role,
-          team: userData.team,
-          avatar_url: userData.avatar_url
-        })
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create user');
+      if (selectedUser) {
+        // This is an edit operation
+        const response = await fetch(`https://dzscouyoqscqdixlwrlm.supabase.co/functions/v1/update-user`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6c2NvdXlvcXNjcWRpeGx3cmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1MTE4MjcsImV4cCI6MjA2ODA4NzgyN30.YFTuB3xSf6f6ebTBSkVLUT4vrm-vBxABo7MpG84zWZc'
+          },
+          body: JSON.stringify({
+            id: selectedUser.id,
+            name: userData.name,
+            role: userData.role,
+            team: userData.team,
+            avatar_url: userData.avatar_url
+          })
+        });
+  
+        const result = await response.json();
+  
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to update user');
+        }
+  
+        // Refresh the users list
+        refetch();
+        
+        // Show success message
+        console.log('Utilizador atualizado com sucesso:', result.user);
+        alert('Utilizador atualizado com sucesso!');
+      } else {
+        // This is a create operation
+        const response = await fetch(`https://dzscouyoqscqdixlwrlm.supabase.co/functions/v1/create-user`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6c2NvdXlvcXNjcWRpeGx3cmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1MTE4MjcsImV4cCI6MjA2ODA4NzgyN30.YFTuB3xSf6f6ebTBSkVLUT4vrm-vBxABo7MpG84zWZc'
+          },
+          body: JSON.stringify({
+            name: userData.name,
+            email: userData.email,
+            role: userData.role,
+            team: userData.team,
+            avatar_url: userData.avatar_url
+          })
+        });
+  
+        const result = await response.json();
+  
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to create user');
+        }
+  
+        // Refresh the users list
+        refetch();
+        
+        // Show success message
+        console.log('Utilizador criado com sucesso:', result.user);
+        alert('Utilizador criado com sucesso!');
       }
-
-      // Refresh the users list
-      refetch();
       
-      // Show success message
-      console.log('Utilizador criado com sucesso:', result.user);
-      alert('Utilizador criado com sucesso!');
+      // Reset selected user
+      setSelectedUser(null);
       
     } catch (error) {
-      console.error('Erro ao criar utilizador:', error);
-      alert(`Erro ao criar utilizador: ${error.message}`);
+      console.error('Erro ao salvar utilizador:', error);
+      alert(`Erro ao salvar utilizador: ${error.message}`);
       throw error;
     }
   };
@@ -381,7 +417,7 @@ export const UsersPage: React.FC = () => {
       <UserFormDialog 
         open={isFormDialogOpen}
         onOpenChange={setIsFormDialogOpen}
-        onSave={handleCreateUser}
+        onSave={handleSaveUser}
       />
     </div>
   );
