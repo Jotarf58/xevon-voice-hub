@@ -74,11 +74,11 @@ serve(async (req) => {
     }
 
     // Parse the request body
-    const { name, email, role, team, avatar_url } = await req.json()
+    const { user_id } = await req.json()
 
-    if (!name || !email || !role || !team) {
+    if (!user_id) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
+        JSON.stringify({ error: 'Missing user_id' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -86,52 +86,10 @@ serve(async (req) => {
       )
     }
 
-    // Check if user with this email already exists
-    const { data: existingProfile, error: checkError } = await supabaseAdmin
-      .from('profiles')
-      .select('email')
-      .eq('email', email)
-      .single()
-
-    if (existingProfile) {
+    // Prevent self-deletion
+    if (user_id === user.id) {
       return new Response(
-        JSON.stringify({ error: 'User with this email already exists' }),
-        { 
-          status: 409, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
-
-    // Validate role permissions
-    if (profile.role === 'manager' && !['user'].includes(role)) {
-      return new Response(
-        JSON.stringify({ error: 'Managers can only create users' }),
-        { 
-          status: 403, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
-
-    console.log(`Creating user with email: ${email}, role: ${role}, team: ${team}`);
-
-    // Create the user in Supabase Auth
-    const { data: authData, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password: Math.random().toString(36).slice(-8) + 'Temp!123', // Temporary password
-      email_confirm: true,
-      user_metadata: {
-        name,
-        role,
-        team
-      }
-    })
-
-    if (createUserError) {
-      console.error('Auth user creation error:', createUserError)
-      return new Response(
-        JSON.stringify({ error: createUserError.message }),
+        JSON.stringify({ error: 'Cannot delete your own account' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -139,55 +97,27 @@ serve(async (req) => {
       )
     }
 
-    if (!authData.user) {
-      console.error('No user returned from auth creation')
+    console.log(`Deleting user with ID: ${user_id}`);
+
+    // Delete the user from Supabase Auth (this will cascade delete the profile)
+    const { error: deleteUserError } = await supabaseAdmin.auth.admin.deleteUser(user_id)
+
+    if (deleteUserError) {
+      console.error('Auth user deletion error:', deleteUserError)
       return new Response(
-        JSON.stringify({ error: 'Failed to create user' }),
+        JSON.stringify({ error: deleteUserError.message }),
         { 
-          status: 500, 
+          status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
     }
 
-    console.log(`Auth user created with ID: ${authData.user.id}`);
-
-    // Wait a moment for the trigger to create the profile
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Update the profile with the provided details
-    const { data: profileData, error: updateProfileError } = await supabaseAdmin
-      .from('profiles')
-      .update({
-        name,
-        role,
-        team,
-        avatar_url: avatar_url || null
-      })
-      .eq('user_id', authData.user.id)
-      .select('*')
-      .single();
-    
-    if (updateProfileError) {
-      console.error('Error updating profile:', updateProfileError);
-      // If updating profile fails, clean up the auth user
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      
-      return new Response(
-        JSON.stringify({ error: 'Failed to create user profile' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    console.log('Profile created successfully:', profileData)
+    console.log('User deleted successfully');
 
     return new Response(
       JSON.stringify({ 
-        message: 'User created successfully',
-        user: profileData
+        message: 'User deleted successfully'
       }),
       { 
         status: 200, 

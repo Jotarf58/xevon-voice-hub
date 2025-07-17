@@ -58,6 +58,19 @@ export const MessagesPage: React.FC = () => {
     setIsDetailsOpen(true);
   };
 
+  const handleReplyMessage = (message: any) => {
+    // Create a reply context for the message
+    const replyData = {
+      to: message.sender_number,
+      replyTo: message.id,
+      originalContent: message.content
+    };
+    
+    // You can implement a reply modal or redirect to a compose view
+    console.log('Reply to message:', replyData);
+    alert(`Funcionalidade de resposta será implementada em breve.\nResponder para: ${message.sender_number}`);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'read': return 'bg-green-100 text-green-800 border-green-200';
@@ -282,6 +295,10 @@ export const MessagesPage: React.FC = () => {
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewMessage(message); }}>
                       <MessageSquare className="mr-2 h-4 w-4" />
                       Ver Detalhes
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleReplyMessage(message); }}>
+                      <Send className="mr-2 h-4 w-4" />
+                      Responder
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

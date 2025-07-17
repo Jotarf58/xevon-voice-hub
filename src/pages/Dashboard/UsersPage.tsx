@@ -66,6 +66,57 @@ export const UsersPage: React.FC = () => {
     setIsFormDialogOpen(true);
   };
 
+  const handleDeleteUser = async (user: any) => {
+    if (user.id === currentUser?.id) {
+      toast({
+        title: "Erro",
+        description: "Não é possível eliminar o seu próprio utilizador",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (confirm(`Tem a certeza que deseja eliminar o utilizador "${user.name}"? Esta ação não pode ser desfeita.`)) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session?.access_token) {
+          throw new Error('No active session');
+        }
+
+        const response = await fetch(`https://dzscouyoqscqdixlwrlm.supabase.co/functions/v1/delete-user`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6c2NvdXlvcXNjcWRpeGx3cmxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1MTE4MjcsImV4cCI6MjA2ODA4NzgyN30.YFTuB3xSf6f6ebTBSkVLUT4vrm-vBxABo7MpG84zWZc'
+          },
+          body: JSON.stringify({ user_id: user.user_id })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to delete user');
+        }
+
+        toast({
+          title: "Sucesso",
+          description: "Utilizador eliminado com sucesso",
+        });
+
+        refetch();
+      } catch (error: any) {
+        console.error('Erro ao eliminar utilizador:', error);
+        toast({
+          title: "Erro",
+          description: error.message || "Erro ao eliminar utilizador",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const handleSaveUser = async (userData: any) => {
     try {
       // Get the current session
@@ -350,7 +401,7 @@ export const UsersPage: React.FC = () => {
           {filteredUsers.map((user) => (
           <Card key={user.id} className="border-2 hover:shadow-card transition-all duration-200 cursor-pointer" onClick={() => handleViewUser(user)}>
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
                     {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
@@ -369,6 +420,33 @@ export const UsersPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
+                
+                {canManageUsers && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewUser(user); }}>
+                        <Users className="mr-2 h-4 w-4" />
+                        Ver Detalhes
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditUser(user); }}>
+                        Editar
+                      </DropdownMenuItem>
+                      {user.id !== currentUser?.id && (
+                        <DropdownMenuItem 
+                          onClick={(e) => { e.stopPropagation(); handleDeleteUser(user); }}
+                          className="text-red-600"
+                        >
+                          Eliminar
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
             </CardContent>
           </Card>
