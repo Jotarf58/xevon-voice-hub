@@ -67,7 +67,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar 
-      className={`${collapsed ? "w-80" : "w-64"} border-r border-border bg-card transition-all duration-300`}
+      className={`${collapsed ? "w-30" : "w-64"} border-r border-border bg-card transition-all duration-300`}
       collapsible="icon"
     >
       <SidebarContent className="flex flex-col h-full">
@@ -78,7 +78,7 @@ export function AppSidebar() {
               <img 
                 src="/lovable-uploads/18bd00ac-7312-4fae-9241-d12230e20fe4.png" 
                 alt="Xevon Logo" 
-                className="object-contain flex-shrink-0 w-32 h-32"
+                className={`object-contain flex-shrink-0 ${collapsed ? 'w-16 h-16' : 'w-8 h-8'}`}
               />
               {!collapsed && (
                 <div className="flex flex-col animate-fade-in">
