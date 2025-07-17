@@ -230,34 +230,12 @@ export function useUsers() {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      if (!user) return;
-      
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        setUsers(data || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erro ao carregar utilizadores');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, [user]);
-
-  const refetch = async () => {
+  const fetchUsers = async () => {
     if (!user) return;
     
     try {
       setLoading(true);
+      setError(null);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -267,9 +245,18 @@ export function useUsers() {
       setUsers(data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar utilizadores');
+      setUsers([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, [user]);
+
+  const refetch = () => {
+    return fetchUsers();
   };
 
   return { users, loading, error, refetch };

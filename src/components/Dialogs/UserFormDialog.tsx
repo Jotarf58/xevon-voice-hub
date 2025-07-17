@@ -60,6 +60,24 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
   const role = watch('role');
   const team = watch('team');
 
+  // Define available roles based on current user's role
+  const getAvailableRoles = () => {
+    if (user?.role === 'developer') {
+      return [
+        { value: 'user', label: 'Utilizador' },
+        { value: 'manager', label: 'Gestor' },
+        { value: 'developer', label: 'Desenvolvedor' }
+      ];
+    } else if (user?.role === 'manager') {
+      return [
+        { value: 'user', label: 'Utilizador' }
+      ];
+    }
+    return []; // Users can't create other users
+  };
+
+  const availableRoles = getAvailableRoles();
+
   const onSubmit = (data: UserFormData) => {
     onSave(data);
     reset();
@@ -106,9 +124,11 @@ export const UserFormDialog: React.FC<UserFormDialogProps> = ({
                   <SelectValue placeholder="Selecione a função" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">Utilizador</SelectItem>
-                  <SelectItem value="manager">Gestor</SelectItem>
-                  <SelectItem value="developer">Desenvolvedor</SelectItem>
+                  {availableRoles.map((roleOption) => (
+                    <SelectItem key={roleOption.value} value={roleOption.value}>
+                      {roleOption.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

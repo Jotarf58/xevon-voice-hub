@@ -27,6 +27,8 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useUsers } from '@/hooks/useSupabaseData';
 import { UserDetailsDialog } from '@/components/Dialogs/UserDetailsDialog';
+import { UserFormDialog } from '@/components/Dialogs/UserFormDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 interface User {
   id: string;
@@ -47,9 +49,10 @@ export const UsersPage: React.FC = () => {
   const [filterTeam, setFilterTeam] = useState('all');
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
 
   // Real data from database
-  const { users, loading, error } = useUsers();
+  const { users, loading, error, refetch } = useUsers();
 
   const handleViewUser = (user: any) => {
     setSelectedUser(user);
@@ -59,6 +62,45 @@ export const UsersPage: React.FC = () => {
   const handleEditUser = (user: any) => {
     // TODO: Implementar edição de utilizador
     console.log('Editar utilizador:', user);
+  };
+
+  const handleCreateUser = async (userData: any) => {
+    try {
+      // First create the auth user
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: userData.email,
+        password: 'temp123456', // Temporary password - user should change it
+        email_confirm: true,
+        user_metadata: {
+          name: userData.name
+        }
+      });
+
+      if (authError) throw authError;
+
+      // Then create the profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: authData.user.id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role,
+          team: userData.team,
+          avatar_url: userData.avatar_url || null
+        });
+
+      if (profileError) throw profileError;
+
+      // Refresh the users list
+      refetch();
+      
+      // Show success message
+      console.log('Utilizador criado com sucesso');
+    } catch (error) {
+      console.error('Erro ao criar utilizador:', error);
+      throw error;
+    }
   };
 
   const getRoleColor = (role: string) => {
@@ -110,7 +152,10 @@ export const UsersPage: React.FC = () => {
           </p>
         </div>
         {canManageUsers && (
-          <Button className="bg-gradient-primary text-primary-foreground">
+          <Button 
+            className="bg-gradient-primary text-primary-foreground"
+            onClick={() => setIsFormDialogOpen(true)}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Novo Utilizador
           </Button>
@@ -323,6 +368,13 @@ export const UsersPage: React.FC = () => {
         onOpenChange={setIsDetailsOpen}
         onEdit={handleEditUser}
         canEdit={canManageUsers && selectedUser?.id !== currentUser?.id}
+      />
+
+      {/* Dialog de Criação de Utilizador */}
+      <UserFormDialog 
+        open={isFormDialogOpen}
+        onOpenChange={setIsFormDialogOpen}
+        onSave={handleCreateUser}
       />
     </div>
   );

@@ -34,10 +34,10 @@ const menuItems = [
   { title: "Tickets", url: "/dashboard/tickets", icon: Ticket },
   { title: "Chamadas", url: "/dashboard/calls", icon: Phone },
   { title: "Mensagens", url: "/dashboard/messages", icon: MessageSquare },
-  { title: "Utilizadores", url: "/dashboard/users", icon: Users },
 ];
 
-const developerMenuItems = [
+const adminMenuItems = [
+  { title: "Utilizadores", url: "/dashboard/users", icon: Users },
   { title: "Configurações", url: "/dashboard/settings", icon: Settings },
 ];
 
@@ -149,8 +149,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Developer Menu */}
-        {user?.role === 'developer' && (
+        {/* Admin Menu - Only for developers and managers */}
+        {(user?.role === 'developer' || user?.role === 'manager') && (
           <SidebarGroup className="px-3 py-2">
             {!collapsed && (
               <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2">
@@ -159,7 +159,7 @@ export function AppSidebar() {
             )}
             <SidebarGroupContent>
               <SidebarMenu className="space-y-1">
-                {developerMenuItems.map((item) => {
+                {adminMenuItems.map((item) => {
                   const active = isActive(item.url);
                   return (
                     <SidebarMenuItem key={item.title}>
