@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from '@/contexts/AuthContext';
 import { useUsers } from '@/hooks/useSupabaseData';
+import { UserDetailsDialog } from '@/components/Dialogs/UserDetailsDialog';
 
 interface User {
   id: string;
@@ -44,9 +45,21 @@ export const UsersPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [filterTeam, setFilterTeam] = useState('all');
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   // Real data from database
   const { users, loading, error } = useUsers();
+
+  const handleViewUser = (user: any) => {
+    setSelectedUser(user);
+    setIsDetailsOpen(true);
+  };
+
+  const handleEditUser = (user: any) => {
+    // TODO: Implementar edição de utilizador
+    console.log('Editar utilizador:', user);
+  };
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -233,7 +246,7 @@ export const UsersPage: React.FC = () => {
       {!loading && !error && (
         <div className="space-y-4">
           {filteredUsers.map((user) => (
-          <Card key={user.id} className="border-2 hover:shadow-card transition-all duration-200">
+          <Card key={user.id} className="border-2 hover:shadow-card transition-all duration-200 cursor-pointer" onClick={() => handleViewUser(user)}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -261,17 +274,23 @@ export const UsersPage: React.FC = () => {
                     <p>{new Date(user.created_at).toLocaleDateString('pt-BR')}</p>
                   </div>
                   
-                  {canManageUsers && user.id !== currentUser?.id && (
+                  {canManageUsers && (
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="sm">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          Editar
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewUser(user); }}>
+                          <Users className="mr-2 h-4 w-4" />
+                          Ver Detalhes
                         </DropdownMenuItem>
+                        {user.id !== currentUser?.id && (
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditUser(user); }}>
+                            Editar
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
@@ -296,6 +315,15 @@ export const UsersPage: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Dialog de Detalhes */}
+      <UserDetailsDialog
+        user={selectedUser}
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        onEdit={handleEditUser}
+        canEdit={canManageUsers && selectedUser?.id !== currentUser?.id}
+      />
     </div>
   );
 };
