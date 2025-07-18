@@ -478,7 +478,7 @@ export function useRecentTickets() {
   return { recentTickets, loading };
 }
 
-// Hook otimizado para tarefas com alta prioridade  
+// Hook otimizado para tarefas prioritárias ordenadas por prioridade e data
 export function useHighPriorityTasks() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -490,7 +490,7 @@ export function useHighPriorityTasks() {
       
       try {
         setLoading(true);
-        // Query otimizada usando índices compostos
+        // Query otimizada: busca todas as prioridades e ordena corretamente
         const { data, error } = await supabase
           .from('tasks')
           .select(`
@@ -506,14 +506,24 @@ export function useHighPriorityTasks() {
             assignee:profiles!tasks_assignee_id_fkey(name, email),
             creator:profiles!tasks_created_by_fkey(name, email)
           `)
-          .eq('priority', 'high')
           .eq('archived', false)
           .in('status', ['pending', 'in_progress'])
-          .order('created_at', { ascending: false })
-          .limit(5);
+          .limit(10);
 
         if (error) throw error;
-        setTasks(data || []);
+        
+        // Ordenar por prioridade (high -> medium -> low) e depois por data (mais antigas primeiro)
+        const sortedTasks = (data || []).sort((a, b) => {
+          const priorityOrder = { high: 3, medium: 2, low: 1 };
+          const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
+          
+          if (priorityDiff !== 0) return priorityDiff;
+          
+          // Mesma prioridade: mais antigas primeiro
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        }).slice(0, 5);
+
+        setTasks(sortedTasks);
       } catch (err) {
         console.error('Erro ao carregar tarefas prioritárias:', err);
         setTasks([]);
