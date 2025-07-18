@@ -140,9 +140,6 @@ export const LoginPage: React.FC = () => {
             <div className="mt-8 p-4 bg-muted/50 rounded-lg">
               <p className="text-sm font-medium text-foreground mb-2">Credenciais de demonstração:</p>
               <div className="text-xs text-muted-foreground space-y-1">
-                <p><strong>Admin:</strong> admin@xevon.com / admin123</p>
-                <p><strong>Manager:</strong> joao@xevon.com / user123</p>
-                <p><strong>User:</strong> maria@xevon.com / user123</p>
               </div>
             </div>
           </CardContent>
