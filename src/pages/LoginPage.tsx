@@ -135,13 +135,6 @@ export const LoginPage: React.FC = () => {
                 )}
               </Button>
             </form>
-
-            {/* Demo credentials info */}
-            <div className="mt-8 p-4 bg-muted/50 rounded-lg">
-              <p className="text-sm font-medium text-foreground mb-2">Credenciais de demonstração:</p>
-              <div className="text-xs text-muted-foreground space-y-1">
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>
