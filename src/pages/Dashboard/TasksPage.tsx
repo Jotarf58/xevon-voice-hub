@@ -319,6 +319,8 @@ export const TasksPage: React.FC = () => {
                     <SelectItem value="Integration">Integração</SelectItem>
                     <SelectItem value="Content">Conteúdo</SelectItem>
                     <SelectItem value="Analytics">Analytics</SelectItem>
+                    <SelectItem value="Support">Suporte</SelectItem>
+                    {user?.role !== 'user' && <SelectItem value="X">Categoria X</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>
@@ -375,17 +377,29 @@ export const TasksPage: React.FC = () => {
                           <User className="h-4 w-4" />
                           <span>Responsável: {task.assignee?.name || 'Não atribuído'}</span>
                         </div>
+                        <div className="flex items-center gap-1">
+                          <User className="h-4 w-4" />
+                          <span>Criado por: {task.creator?.name || 'N/A'}</span>
+                        </div>
                         {task.due_date && (
                           <div className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
-                            <span>{new Date(task.due_date).toLocaleDateString('pt-BR')}</span>
+                            <span>Prazo: {new Date(task.due_date).toLocaleDateString('pt-BR')}</span>
                           </div>
                         )}
-                        <div>
+                        <div className="flex items-center gap-1">
                           <span className="font-medium">Equipe:</span> {task.team}
                         </div>
-                        <div>
+                        <div className="flex items-center gap-1">
                           <span className="font-medium">Categoria:</span> {task.category}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          <span>Criado: {new Date(task.created_at).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          <span>Atualizado: {new Date(task.updated_at).toLocaleDateString('pt-BR')}</span>
                         </div>
                       </div>
                     </div>

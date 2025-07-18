@@ -17,6 +17,7 @@ export type Database = {
       calls: {
         Row: {
           caller_number: string
+          contact_id: string | null
           created_at: string
           duration: number | null
           ended_at: string | null
@@ -30,6 +31,7 @@ export type Database = {
         }
         Insert: {
           caller_number: string
+          contact_id?: string | null
           created_at?: string
           duration?: number | null
           ended_at?: string | null
@@ -43,6 +45,7 @@ export type Database = {
         }
         Update: {
           caller_number?: string
+          contact_id?: string | null
           created_at?: string
           duration?: number | null
           ended_at?: string | null
@@ -56,6 +59,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "calls_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "calls_handled_by_fkey"
             columns: ["handled_by"]
             isOneToOne: false
@@ -64,8 +74,51 @@ export type Database = {
           },
         ]
       }
+      contacts: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_blocked: boolean
+          name: string | null
+          notes: string | null
+          organization: string | null
+          phone_number: string
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_blocked?: boolean
+          name?: string | null
+          notes?: string | null
+          organization?: string | null
+          phone_number: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_blocked?: boolean
+          name?: string | null
+          notes?: string | null
+          organization?: string | null
+          phone_number?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
+          contact_id: string | null
           content: string
           created_at: string
           delivered_at: string | null
@@ -80,6 +133,7 @@ export type Database = {
           status: Database["public"]["Enums"]["message_status"]
         }
         Insert: {
+          contact_id?: string | null
           content: string
           created_at?: string
           delivered_at?: string | null
@@ -94,6 +148,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["message_status"]
         }
         Update: {
+          contact_id?: string | null
           content?: string
           created_at?: string
           delivered_at?: string | null
@@ -108,6 +163,13 @@ export type Database = {
           status?: Database["public"]["Enums"]["message_status"]
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_processed_by_fkey"
             columns: ["processed_by"]
@@ -252,6 +314,7 @@ export type Database = {
       tickets: {
         Row: {
           assignee_id: string | null
+          contact_id: string | null
           created_at: string
           description: string | null
           id: string
@@ -267,6 +330,7 @@ export type Database = {
         }
         Insert: {
           assignee_id?: string | null
+          contact_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -282,6 +346,7 @@ export type Database = {
         }
         Update: {
           assignee_id?: string | null
+          contact_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -302,6 +367,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "tickets_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tickets_reporter_id_fkey"

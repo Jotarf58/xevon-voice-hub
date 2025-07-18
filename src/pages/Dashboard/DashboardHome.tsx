@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDashboardStats, useRecentTickets, useInitializeDemoData } from '@/hooks/useSupabaseData';
+import { useDashboardStats, useHighPriorityTasks, useInitializeDemoData } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +22,7 @@ export const DashboardHome: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { stats: dbStats, loading: statsLoading } = useDashboardStats();
-  const { recentTickets, loading: ticketsLoading } = useRecentTickets();
+  const { tasks: highPriorityTasks, loading: tasksLoading } = useHighPriorityTasks();
   
   // Inicializar dados de demonstração para novos utilizadores
   useInitializeDemoData();
@@ -130,26 +130,26 @@ export const DashboardHome: React.FC = () => {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Recent Tickets */}
+        {/* High Priority Tasks */}
         <Card className="border-2">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl text-foreground">Tickets Recentes</CardTitle>
-                <CardDescription>Últimas ocorrências que precisam de atenção</CardDescription>
+                <CardTitle className="text-xl text-foreground">Tarefas Prioritárias</CardTitle>
+                <CardDescription>Tarefas com alta prioridade que precisam de atenção</CardDescription>
               </div>
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => navigate('/dashboard/tickets')}
+                onClick={() => navigate('/dashboard/tasks')}
               >
-                Ver Todos
+                Ver Todas
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {ticketsLoading ? (
+            {tasksLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="flex items-start gap-4 p-4 rounded-lg border border-border">
@@ -161,29 +161,33 @@ export const DashboardHome: React.FC = () => {
                   </div>
                 ))}
               </div>
-            ) : recentTickets.length > 0 ? (
-              recentTickets.map((ticket) => (
-                <div key={ticket.id} className="flex items-start gap-4 p-4 rounded-lg border border-border hover:bg-muted/30 transition-colors">
-                  <div className={`w-3 h-3 rounded-full mt-2 ${getPriorityColor(ticket.priority)}`} />
+            ) : highPriorityTasks.length > 0 ? (
+              highPriorityTasks.map((task) => (
+                <div key={task.id} className="flex items-start gap-4 p-4 rounded-lg border border-border hover:bg-muted/30 transition-colors">
+                  <div className="w-3 h-3 rounded-full mt-2 bg-red-500" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium text-foreground truncate">{ticket.title}</h4>
+                      <h4 className="font-medium text-foreground truncate">{task.title}</h4>
                       <Badge variant="outline" className="text-xs">
-                        #{ticket.id.slice(0, 8)}
+                        #{task.id.slice(0, 8)}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>👤 {ticket.assignee?.name || 'Não atribuído'}</span>
-                      <span>📋 {getStatusLabel(ticket.status)}</span>
-                      <span>🕒 {getRelativeTime(ticket.created_at)}</span>
+                      <span>👤 {task.assignee?.name || 'Não atribuído'}</span>
+                      <span>🎯 {task.priority.toUpperCase()}</span>
+                      <span>📂 {task.category}</span>
+                      <span>👥 {task.team}</span>
+                      {task.due_date && (
+                        <span>📅 {new Date(task.due_date).toLocaleDateString('pt-BR')}</span>
+                      )}
                     </div>
                   </div>
                 </div>
               ))
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <Ticket className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                <p>Nenhum ticket recente encontrado</p>
+                <CheckSquare className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                <p>Nenhuma tarefa prioritária encontrada</p>
               </div>
             )}
           </CardContent>

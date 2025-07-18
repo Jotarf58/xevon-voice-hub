@@ -478,6 +478,46 @@ export function useRecentTickets() {
   return { recentTickets, loading };
 }
 
+// Hook para tarefas com alta prioridade  
+export function useHighPriorityTasks() {
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchHighPriorityTasks = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('tasks')
+          .select(`
+            *,
+            assignee:profiles!tasks_assignee_id_fkey(name, email),
+            creator:profiles!tasks_created_by_fkey(name, email)
+          `)
+          .eq('archived', false)
+          .eq('priority', 'high')
+          .order('created_at', { ascending: false })
+          .limit(3);
+
+        if (error) throw error;
+        setTasks(data || []);
+      } catch (err) {
+        console.error('Erro ao carregar tarefas prioritárias:', err);
+        setTasks([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHighPriorityTasks();
+  }, [user]);
+
+  return { tasks, loading };
+}
+
 export function useDashboardStats() {
   const [stats, setStats] = useState({
     totalTasks: 0,
