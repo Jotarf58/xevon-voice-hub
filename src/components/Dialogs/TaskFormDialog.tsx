@@ -105,7 +105,7 @@ export const TaskFormDialog: React.FC<TaskFormDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent key={task?.id || 'new-task'} className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {task ? 'Editar Tarefa' : 'Nova Tarefa'}
