@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDashboardStats, useHighPriorityTasks, useInitializeDemoData } from '@/hooks/useSupabaseData';
+import { useDashboardStats, useHighPriorityTasks, useInitializeDemoData, useTaskOperations } from '@/hooks/useSupabaseData';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TaskDetailsDialog } from '@/components/Dialogs/TaskDetailsDialog';
+import { TaskFormDialog } from '@/components/Dialogs/TaskFormDialog';
 import { 
   CheckSquare, 
   Ticket, 
@@ -24,6 +26,8 @@ export const DashboardHome: React.FC = () => {
   const navigate = useNavigate();
   const { stats: dbStats, loading: statsLoading } = useDashboardStats();
   const { tasks: highPriorityTasks, loading: tasksLoading } = useHighPriorityTasks();
+  const { updateTask } = useTaskOperations();
+  const { toast } = useToast();
   
   // Inicializar dados de demonstração para novos utilizadores
   useInitializeDemoData();
@@ -31,6 +35,8 @@ export const DashboardHome: React.FC = () => {
   // Estado para o dialog de detalhes da tarefa
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [taskFormOpen, setTaskFormOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<any>(null);
 
   const handleTaskClick = (task: any) => {
     setSelectedTask(task);
@@ -38,13 +44,36 @@ export const DashboardHome: React.FC = () => {
   };
 
   const handleTaskEdit = (task: any) => {
-    // TODO: Implementar edição de tarefa
-    console.log('Edit task:', task);
+    setTaskToEdit(task);
+    setTaskDialogOpen(false);
+    setTaskFormOpen(true);
   };
 
   const handleTaskDelete = (taskId: string) => {
     // TODO: Implementar exclusão de tarefa
     console.log('Delete task:', taskId);
+  };
+
+  const handleSaveTask = async (taskData: any) => {
+    try {
+      if (taskToEdit) {
+        await updateTask(taskToEdit.id, taskData);
+        toast({
+          title: "Sucesso",
+          description: "Tarefa atualizada com sucesso!",
+        });
+      }
+      setTaskFormOpen(false);
+      setTaskToEdit(null);
+      // Refresh the page to show updated data
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar tarefa. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   const stats = [
@@ -332,6 +361,14 @@ export const DashboardHome: React.FC = () => {
         onOpenChange={setTaskDialogOpen}
         onEdit={handleTaskEdit}
         onDelete={handleTaskDelete}
+      />
+
+      {/* Task Form Dialog */}
+      <TaskFormDialog
+        task={taskToEdit}
+        open={taskFormOpen}
+        onOpenChange={setTaskFormOpen}
+        onSave={handleSaveTask}
       />
     </div>
   );
