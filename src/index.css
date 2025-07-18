@@ -44,6 +44,12 @@ All colors MUST be HSL.
     --xevon-gray: 220 15% 25%;
     --xevon-gray-light: 220 10% 85%;
     
+    /* Priority colors */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    
     /* Sidebar navigation states */
     --nav-active: 0 0% 4%;
     --nav-active-foreground: 0 0% 98%;

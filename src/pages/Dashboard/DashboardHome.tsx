@@ -73,19 +73,36 @@ export const DashboardHome: React.FC = () => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-500';
-      case 'medium': return 'bg-yellow-500';
-      case 'low': return 'bg-green-500';
-      default: return 'bg-gray-500';
+      case 'high': return 'hsl(var(--destructive))';
+      case 'medium': return 'hsl(var(--warning))';
+      case 'low': return 'hsl(var(--success))';
+      default: return 'hsl(var(--muted-foreground))';
+    }
+  };
+
+  const getPriorityBadgeVariant = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'destructive';
+      case 'medium': return 'outline';
+      case 'low': return 'secondary';
+      default: return 'outline';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'hsl(var(--muted-foreground))';
+      case 'in_progress': return 'hsl(var(--primary))';
+      case 'completed': return 'hsl(var(--success))';
+      default: return 'hsl(var(--muted-foreground))';
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'open': return 'Aberto';
+      case 'pending': return 'Pendente';
       case 'in_progress': return 'Em Progresso';
-      case 'proposed_solution': return 'Solução Proposta';
-      case 'closed': return 'Fechado';
+      case 'completed': return 'Concluída';
       default: return status;
     }
   };
@@ -163,22 +180,55 @@ export const DashboardHome: React.FC = () => {
               </div>
             ) : highPriorityTasks.length > 0 ? (
               highPriorityTasks.map((task) => (
-                <div key={task.id} className="flex items-start gap-4 p-4 rounded-lg border border-border hover:bg-muted/30 transition-colors">
-                  <div className="w-3 h-3 rounded-full mt-2 bg-red-500" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium text-foreground truncate">{task.title}</h4>
-                      <Badge variant="outline" className="text-xs">
+                <div key={task.id} className="relative overflow-hidden rounded-lg border border-border hover:shadow-md transition-all duration-200 group">
+                  <div 
+                    className="absolute left-0 top-0 w-1 h-full"
+                    style={{ backgroundColor: getPriorityColor(task.priority) }}
+                  />
+                  <div className="p-4 pl-6">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-foreground truncate text-base mb-1">
+                          {task.title}
+                        </h4>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge 
+                            variant={getPriorityBadgeVariant(task.priority)}
+                            className="text-xs font-medium"
+                          >
+                            {task.priority.toUpperCase()}
+                          </Badge>
+                          <Badge 
+                            variant="outline" 
+                            className="text-xs"
+                            style={{ color: getStatusColor(task.status) }}
+                          >
+                            {getStatusLabel(task.status)}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            {task.category}
+                          </Badge>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="text-xs ml-2 flex-shrink-0">
                         #{task.id.slice(0, 8)}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>👤 {task.assignee?.name || 'Não atribuído'}</span>
-                      <span>🎯 {task.priority.toUpperCase()}</span>
-                      <span>📂 {task.category}</span>
-                      <span>👥 {task.team}</span>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        <span className="truncate">{task.assignee?.name || 'Não atribuído'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        <span>{getRelativeTime(task.created_at)}</span>
+                      </div>
                       {task.due_date && (
-                        <span>📅 {new Date(task.due_date).toLocaleDateString('pt-BR')}</span>
+                        <div className="flex items-center gap-2 col-span-2">
+                          <AlertCircle className="h-4 w-4" />
+                          <span>Prazo: {new Date(task.due_date).toLocaleDateString('pt-BR')}</span>
+                        </div>
                       )}
                     </div>
                   </div>
