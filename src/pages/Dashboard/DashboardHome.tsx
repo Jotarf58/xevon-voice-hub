@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardStats, useHighPriorityTasks, useInitializeDemoData } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { TaskDetailsDialog } from '@/components/Dialogs/TaskDetailsDialog';
 import { 
   CheckSquare, 
   Ticket, 
@@ -26,6 +27,25 @@ export const DashboardHome: React.FC = () => {
   
   // Inicializar dados de demonstração para novos utilizadores
   useInitializeDemoData();
+
+  // Estado para o dialog de detalhes da tarefa
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+
+  const handleTaskClick = (task: any) => {
+    setSelectedTask(task);
+    setTaskDialogOpen(true);
+  };
+
+  const handleTaskEdit = (task: any) => {
+    // TODO: Implementar edição de tarefa
+    console.log('Edit task:', task);
+  };
+
+  const handleTaskDelete = (taskId: string) => {
+    // TODO: Implementar exclusão de tarefa
+    console.log('Delete task:', taskId);
+  };
 
   const stats = [
     {
@@ -180,7 +200,11 @@ export const DashboardHome: React.FC = () => {
               </div>
             ) : highPriorityTasks.length > 0 ? (
               highPriorityTasks.map((task) => (
-                <div key={task.id} className="relative overflow-hidden rounded-lg border border-border hover:shadow-md transition-all duration-200 group">
+                <div 
+                  key={task.id} 
+                  className="relative overflow-hidden rounded-lg border border-border hover:shadow-md transition-all duration-200 group cursor-pointer"
+                  onClick={() => handleTaskClick(task)}
+                >
                   <div 
                     className="absolute left-0 top-0 w-1 h-full"
                     style={{ backgroundColor: getPriorityColor(task.priority) }}
@@ -300,6 +324,15 @@ export const DashboardHome: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Task Details Dialog */}
+      <TaskDetailsDialog
+        task={selectedTask}
+        open={taskDialogOpen}
+        onOpenChange={setTaskDialogOpen}
+        onEdit={handleTaskEdit}
+        onDelete={handleTaskDelete}
+      />
     </div>
   );
 };
