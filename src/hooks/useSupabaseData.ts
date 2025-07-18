@@ -478,7 +478,7 @@ export function useRecentTickets() {
   return { recentTickets, loading };
 }
 
-// Hook para tarefas com alta prioridade  
+// Hook otimizado para tarefas com alta prioridade  
 export function useHighPriorityTasks() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -490,17 +490,27 @@ export function useHighPriorityTasks() {
       
       try {
         setLoading(true);
+        // Query otimizada usando índices compostos
         const { data, error } = await supabase
           .from('tasks')
           .select(`
-            *,
+            id,
+            title,
+            description,
+            status,
+            priority,
+            category,
+            team,
+            due_date,
+            created_at,
             assignee:profiles!tasks_assignee_id_fkey(name, email),
             creator:profiles!tasks_created_by_fkey(name, email)
           `)
-          .eq('archived', false)
           .eq('priority', 'high')
+          .eq('archived', false)
+          .in('status', ['pending', 'in_progress'])
           .order('created_at', { ascending: false })
-          .limit(3);
+          .limit(5);
 
         if (error) throw error;
         setTasks(data || []);
