@@ -37,10 +37,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Function to fetch user profile
   const fetchUserProfile = async (userId: string) => {
     try {
+      // Since the database uses bigint for id_user but auth uses UUID,
+      // we'll need to either find a user by email or create a mapping
+      // For now, let's try to find by email from the session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.email) return null;
+      
       const { data: profile, error } = await supabase
         .from('users')
         .select('*')
-        .eq('id_user', parseInt(userId))
+        .eq('email', session.user.email)
         .maybeSingle();
         
       if (error) {
@@ -48,16 +54,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
       }
       
-      return profile ? {
-        id: profile.id_user.toString(),
-        name: profile.name || 'User',
-        email: profile.email || '',
-        role: 'user' as const,
-        team: 'default'
-      } : null;
+      if (profile) {
+        return {
+          id: profile.id_user.toString(),
+          name: profile.name || 'User',
+          email: profile.email || '',
+          role: 'user' as const,
+          team: 'default'
+        };
+      } else {
+        // Create a default user if profile not found in database
+        return {
+          id: userId,
+          name: session.user.email?.split('@')[0] || 'User',
+          email: session.user.email || '',
+          role: 'user' as const,
+          team: 'default'
+        };
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
-      return null;
+      // Return a default user even if there's an error
+      const { data: { session } } = await supabase.auth.getSession();
+      return {
+        id: userId,
+        name: session?.user?.email?.split('@')[0] || 'User',
+        email: session?.user?.email || '',
+        role: 'user' as const,
+        team: 'default'
+      };
     }
   };
 
