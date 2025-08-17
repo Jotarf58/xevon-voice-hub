@@ -148,6 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         setIsLoading(false);
+        console.error('Login error:', error);
         return { success: false, error: error.message };
       }
 
@@ -159,9 +160,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setIsLoading(false);
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       setIsLoading(false);
-      return { success: false, error: 'Erro inesperado ao fazer login' };
+      console.error('Login network error:', error);
+      return { 
+        success: false, 
+        error: error.message || error.toString() || 'Erro de conectividade. Verifique sua conexão.' 
+      };
     }
   };
 
