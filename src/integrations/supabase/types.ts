@@ -7,408 +7,124 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
-      calls: {
+      call_history: {
         Row: {
-          caller_number: string
-          contact_id: string | null
           created_at: string
-          duration: number | null
-          ended_at: string | null
-          handled_by: string | null
-          id: string
-          notes: string | null
-          receiver_number: string
-          recording_url: string | null
-          started_at: string
-          status: Database["public"]["Enums"]["call_status"]
+          id_call: number
+          phone_number: number | null
+          status: boolean | null
+          total_call_time: string | null
+          transcription: Json | null
         }
         Insert: {
-          caller_number: string
-          contact_id?: string | null
           created_at?: string
-          duration?: number | null
-          ended_at?: string | null
-          handled_by?: string | null
-          id?: string
-          notes?: string | null
-          receiver_number: string
-          recording_url?: string | null
-          started_at?: string
-          status?: Database["public"]["Enums"]["call_status"]
+          id_call?: number
+          phone_number?: number | null
+          status?: boolean | null
+          total_call_time?: string | null
+          transcription?: Json | null
         }
         Update: {
-          caller_number?: string
-          contact_id?: string | null
           created_at?: string
-          duration?: number | null
-          ended_at?: string | null
-          handled_by?: string | null
-          id?: string
-          notes?: string | null
-          receiver_number?: string
-          recording_url?: string | null
-          started_at?: string
-          status?: Database["public"]["Enums"]["call_status"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "calls_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "calls_handled_by_fkey"
-            columns: ["handled_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      contacts: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          email: string | null
-          id: string
-          is_blocked: boolean
-          name: string | null
-          notes: string | null
-          organization: string | null
-          phone_number: string
-          tags: string[] | null
-          updated_at: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          is_blocked?: boolean
-          name?: string | null
-          notes?: string | null
-          organization?: string | null
-          phone_number: string
-          tags?: string[] | null
-          updated_at?: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          is_blocked?: boolean
-          name?: string | null
-          notes?: string | null
-          organization?: string | null
-          phone_number?: string
-          tags?: string[] | null
-          updated_at?: string
+          id_call?: number
+          phone_number?: number | null
+          status?: boolean | null
+          total_call_time?: string | null
+          transcription?: Json | null
         }
         Relationships: []
       }
-      messages: {
+      message_history: {
         Row: {
-          contact_id: string | null
-          content: string
+          content: string | null
           created_at: string
-          delivered_at: string | null
-          id: string
-          media_url: string | null
-          message_type: string
-          processed_by: string | null
-          read_at: string | null
-          receiver_number: string
-          sender_number: string
-          sent_at: string
-          status: Database["public"]["Enums"]["message_status"]
+          id_message: number
+          phone_number: string | null
         }
         Insert: {
-          contact_id?: string | null
-          content: string
+          content?: string | null
           created_at?: string
-          delivered_at?: string | null
-          id?: string
-          media_url?: string | null
-          message_type?: string
-          processed_by?: string | null
-          read_at?: string | null
-          receiver_number: string
-          sender_number: string
-          sent_at?: string
-          status?: Database["public"]["Enums"]["message_status"]
+          id_message?: number
+          phone_number?: string | null
         }
         Update: {
-          contact_id?: string | null
-          content?: string
+          content?: string | null
           created_at?: string
-          delivered_at?: string | null
-          id?: string
-          media_url?: string | null
-          message_type?: string
-          processed_by?: string | null
-          read_at?: string | null
-          receiver_number?: string
-          sender_number?: string
-          sent_at?: string
-          status?: Database["public"]["Enums"]["message_status"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_processed_by_fkey"
-            columns: ["processed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          email: string
-          id: string
-          name: string
-          role: Database["public"]["Enums"]["user_role"]
-          team: Database["public"]["Enums"]["team_type"]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          email: string
-          id?: string
-          name: string
-          role?: Database["public"]["Enums"]["user_role"]
-          team?: Database["public"]["Enums"]["team_type"]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          email?: string
-          id?: string
-          name?: string
-          role?: Database["public"]["Enums"]["user_role"]
-          team?: Database["public"]["Enums"]["team_type"]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      settings: {
-        Row: {
-          category: string
-          created_at: string
-          description: string | null
-          id: string
-          setting_key: string
-          setting_value: Json
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          category?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          setting_key: string
-          setting_value: Json
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          setting_key?: string
-          setting_value?: Json
-          updated_at?: string
-          updated_by?: string | null
+          id_message?: number
+          phone_number?: string | null
         }
         Relationships: []
       }
       tasks: {
         Row: {
-          archived: boolean
-          assignee_id: string | null
-          category: string
+          category: string | null
           created_at: string
-          created_by: string
           description: string | null
-          due_date: string | null
-          id: string
-          priority: Database["public"]["Enums"]["task_priority"]
-          status: Database["public"]["Enums"]["task_status"]
-          team: Database["public"]["Enums"]["team_type"]
-          title: string
-          updated_at: string
+          id_task: number
+          phone_number: number | null
+          status: boolean | null
+          title: string | null
         }
         Insert: {
-          archived?: boolean
-          assignee_id?: string | null
-          category: string
+          category?: string | null
           created_at?: string
-          created_by: string
           description?: string | null
-          due_date?: string | null
-          id?: string
-          priority?: Database["public"]["Enums"]["task_priority"]
-          status?: Database["public"]["Enums"]["task_status"]
-          team: Database["public"]["Enums"]["team_type"]
-          title: string
-          updated_at?: string
+          id_task?: number
+          phone_number?: number | null
+          status?: boolean | null
+          title?: string | null
         }
         Update: {
-          archived?: boolean
-          assignee_id?: string | null
-          category?: string
+          category?: string | null
           created_at?: string
-          created_by?: string
           description?: string | null
-          due_date?: string | null
-          id?: string
-          priority?: Database["public"]["Enums"]["task_priority"]
-          status?: Database["public"]["Enums"]["task_status"]
-          team?: Database["public"]["Enums"]["team_type"]
-          title?: string
-          updated_at?: string
+          id_task?: number
+          phone_number?: number | null
+          status?: boolean | null
+          title?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_assignee_id_fkey"
-            columns: ["assignee_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "tasks_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
-      tickets: {
+      users: {
         Row: {
-          assignee_id: string | null
-          contact_id: string | null
           created_at: string
-          description: string | null
-          id: string
-          priority: Database["public"]["Enums"]["ticket_priority"]
-          reporter_id: string
-          resolution: string | null
-          resolved_at: string | null
-          status: Database["public"]["Enums"]["ticket_status"]
-          team: Database["public"]["Enums"]["team_type"]
-          title: string
-          type: Database["public"]["Enums"]["ticket_type"]
-          updated_at: string
+          email: string | null
+          id_user: number
+          name: string | null
+          phone_number: number | null
         }
         Insert: {
-          assignee_id?: string | null
-          contact_id?: string | null
           created_at?: string
-          description?: string | null
-          id?: string
-          priority?: Database["public"]["Enums"]["ticket_priority"]
-          reporter_id: string
-          resolution?: string | null
-          resolved_at?: string | null
-          status?: Database["public"]["Enums"]["ticket_status"]
-          team: Database["public"]["Enums"]["team_type"]
-          title: string
-          type?: Database["public"]["Enums"]["ticket_type"]
-          updated_at?: string
+          email?: string | null
+          id_user?: number
+          name?: string | null
+          phone_number?: number | null
         }
         Update: {
-          assignee_id?: string | null
-          contact_id?: string | null
           created_at?: string
-          description?: string | null
-          id?: string
-          priority?: Database["public"]["Enums"]["ticket_priority"]
-          reporter_id?: string
-          resolution?: string | null
-          resolved_at?: string | null
-          status?: Database["public"]["Enums"]["ticket_status"]
-          team?: Database["public"]["Enums"]["team_type"]
-          title?: string
-          type?: Database["public"]["Enums"]["ticket_type"]
-          updated_at?: string
+          email?: string | null
+          id_user?: number
+          name?: string | null
+          phone_number?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "tickets_assignee_id_fkey"
-            columns: ["assignee_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "tickets_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tickets_reporter_id_fkey"
-            columns: ["reporter_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      insert_demo_data_for_user: {
-        Args: { new_user_id: string }
-        Returns: undefined
-      }
+      [_ in never]: never
     }
     Enums: {
-      call_status: "active" | "completed" | "missed" | "failed"
-      message_status: "sent" | "delivered" | "read" | "failed"
-      task_priority: "low" | "medium" | "high"
-      task_status: "pending" | "in_progress" | "completed"
-      team_type: "technical" | "support" | "sales" | "management"
-      ticket_priority: "low" | "medium" | "high"
-      ticket_status: "open" | "in_progress" | "proposed_solution" | "closed"
-      ticket_type:
-        | "bug"
-        | "feature_request"
-        | "support"
-        | "integration"
-        | "configuration"
-      user_role: "developer" | "manager" | "user"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -535,22 +251,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      call_status: ["active", "completed", "missed", "failed"],
-      message_status: ["sent", "delivered", "read", "failed"],
-      task_priority: ["low", "medium", "high"],
-      task_status: ["pending", "in_progress", "completed"],
-      team_type: ["technical", "support", "sales", "management"],
-      ticket_priority: ["low", "medium", "high"],
-      ticket_status: ["open", "in_progress", "proposed_solution", "closed"],
-      ticket_type: [
-        "bug",
-        "feature_request",
-        "support",
-        "integration",
-        "configuration",
-      ],
-      user_role: ["developer", "manager", "user"],
-    },
+    Enums: {},
   },
 } as const
