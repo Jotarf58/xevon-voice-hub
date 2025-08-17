@@ -15,7 +15,7 @@ export function useCalls() {
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from('calls')
+          .from('call_history')
           .select('*')
           .order('created_at', { ascending: false });
 
@@ -37,7 +37,7 @@ export function useCalls() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('calls')
+        .from('call_history')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -66,7 +66,7 @@ export function useMessages() {
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from('messages')
+          .from('message_history')
           .select('*')
           .order('created_at', { ascending: false });
 
@@ -88,7 +88,7 @@ export function useMessages() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('messages')
+        .from('message_history')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -118,12 +118,7 @@ export function useTasks() {
         setLoading(true);
         const { data, error } = await supabase
           .from('tasks')
-          .select(`
-            *,
-            assignee:profiles!tasks_assignee_id_fkey(name, email),
-            creator:profiles!tasks_created_by_fkey(name, email)
-          `)
-          .eq('archived', false)
+          .select('*')
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -145,12 +140,7 @@ export function useTasks() {
       setLoading(true);
       const { data, error } = await supabase
         .from('tasks')
-        .select(`
-          *,
-          assignee:profiles!tasks_assignee_id_fkey(name, email),
-          creator:profiles!tasks_created_by_fkey(name, email)
-        `)
-        .eq('archived', false)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -165,60 +155,14 @@ export function useTasks() {
   return { tasks, loading, error, refetch };
 }
 
+// Tickets não existem na base de dados AMS-Database, então retorno vazio
 export function useTickets() {
   const [tickets, setTickets] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
-
-  useEffect(() => {
-    const fetchTickets = async () => {
-      if (!user) return;
-      
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('tickets')
-          .select(`
-            *,
-            assignee:profiles!tickets_assignee_id_fkey(name, email),
-            reporter:profiles!tickets_reporter_id_fkey(name, email)
-          `)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        setTickets(data || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erro ao carregar tickets');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTickets();
-  }, [user]);
 
   const refetch = async () => {
-    if (!user) return;
-    
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('tickets')
-        .select(`
-          *,
-          assignee:profiles!tickets_assignee_id_fkey(name, email),
-          reporter:profiles!tickets_reporter_id_fkey(name, email)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setTickets(data || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar tickets');
-    } finally {
-      setLoading(false);
-    }
+    // Não há tabela tickets na AMS-Database
   };
 
   return { tickets, loading, error, refetch };
@@ -236,9 +180,9 @@ export function useUsers() {
     try {
       setLoading(true);
       setError(null);
-      console.log('Fetching users from profiles table...');
+      console.log('Fetching users from users table...');
       const { data, error } = await supabase
-        .from('profiles')
+        .from('users')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -266,32 +210,7 @@ export function useUsers() {
   return { users, loading, error, refetch };
 }
 
-// Hook para inserir dados de demonstração para novos utilizadores
-export function useInitializeDemoData() {
-  const { user } = useAuth();
-
-  useEffect(() => {
-    const initializeDemoData = async () => {
-      if (!user?.id) return;
-      
-      try {
-        const { error } = await supabase.rpc('insert_demo_data_for_user', {
-          new_user_id: user.id
-        });
-        
-        if (error) {
-          console.error('Erro ao inicializar dados de demonstração:', error);
-        }
-      } catch (err) {
-        console.error('Erro ao chamar função de dados de demonstração:', err);
-      }
-    };
-
-    initializeDemoData();
-  }, [user?.id]);
-}
-
-// Hook para criar/atualizar tarefas
+// Hook simplificado para operações com tarefas
 export function useTaskOperations() {
   const { user } = useAuth();
 
@@ -303,13 +222,9 @@ export function useTaskOperations() {
       .insert({
         title: taskData.title,
         description: taskData.description,
-        status: taskData.status,
-        priority: taskData.priority,
         category: taskData.category,
-        team: taskData.team,
-        assignee_id: user.id,
-        due_date: taskData.due_date,
-        created_by: user.id
+        phone_number: taskData.phone_number || null,
+        status: true
       })
       .select()
       .single();
@@ -326,68 +241,58 @@ export function useTaskOperations() {
       .update({
         title: taskData.title,
         description: taskData.description,
-        status: taskData.status,
-        priority: taskData.priority,
         category: taskData.category,
-        team: taskData.team,
-        due_date: taskData.due_date,
-        updated_at: new Date().toISOString()
+        phone_number: taskData.phone_number || null,
+        status: taskData.status
       })
-      .eq('id', taskId)
+      .eq('id_task', parseInt(taskId))
       .select()
       .single();
 
     if (error) throw error;
     return data;
-  };
-
-  const completeTask = async (taskId: string) => {
-    const { error } = await supabase
-      .from('tasks')
-      .update({ status: 'completed' })
-      .eq('id', taskId);
-    
-    if (error) throw error;
-  };
-
-  const archiveTask = async (taskId: string) => {
-    const { error } = await supabase
-      .from('tasks')
-      .update({ archived: true })
-      .eq('id', taskId);
-    
-    if (error) throw error;
   };
 
   const deleteTask = async (taskId: string) => {
     const { error } = await supabase
       .from('tasks')
       .delete()
-      .eq('id', taskId);
+      .eq('id_task', parseInt(taskId));
     
     if (error) throw error;
+  };
+
+  const completeTask = async (taskId: string) => {
+    const { error } = await supabase
+      .from('tasks')
+      .update({ status: true })
+      .eq('id_task', parseInt(taskId));
+    
+    if (error) throw error;
+  };
+
+  const archiveTask = async (taskId: string) => {
+    // Não há campo archived na AMS-Database, vamos deletar a tarefa
+    await deleteTask(taskId);
   };
 
   return { createTask, updateTask, deleteTask, completeTask, archiveTask };
 }
 
-// Hook para criar/atualizar tickets
-export function useTicketOperations() {
+// Hook para operações de chamadas
+export function useCallOperations() {
   const { user } = useAuth();
 
-  const createTicket = async (ticketData: any) => {
+  const createCall = async (callData: any) => {
     if (!user) throw new Error('Utilizador não autenticado');
 
     const { data, error } = await supabase
-      .from('tickets')
+      .from('call_history')
       .insert({
-        title: ticketData.title,
-        description: ticketData.description,
-        status: ticketData.status,
-        priority: ticketData.priority,
-        type: ticketData.type,
-        team: ticketData.team,
-        reporter_id: user.id
+        phone_number: callData.phone_number,
+        total_call_time: callData.total_call_time || null,
+        status: callData.status || false,
+        transcription: callData.transcription || null
       })
       .select()
       .single();
@@ -396,21 +301,18 @@ export function useTicketOperations() {
     return data;
   };
 
-  const updateTicket = async (ticketId: string, ticketData: any) => {
+  const updateCall = async (callId: string, callData: any) => {
     if (!user) throw new Error('Utilizador não autenticado');
 
     const { data, error } = await supabase
-      .from('tickets')
+      .from('call_history')
       .update({
-        title: ticketData.title,
-        description: ticketData.description,
-        status: ticketData.status,
-        priority: ticketData.priority,
-        type: ticketData.type,
-        team: ticketData.team,
-        updated_at: new Date().toISOString()
+        phone_number: callData.phone_number,
+        total_call_time: callData.total_call_time,
+        status: callData.status,
+        transcription: callData.transcription
       })
-      .eq('id', ticketId)
+      .eq('id_call', parseInt(callId))
       .select()
       .single();
 
@@ -418,67 +320,91 @@ export function useTicketOperations() {
     return data;
   };
 
-  const closeTicket = async (ticketId: string, resolution: string) => {
-    if (!user) throw new Error('Utilizador não autenticado');
-
-    const { data, error } = await supabase
-      .from('tickets')
-      .update({ 
-        status: 'closed',
-        resolution: resolution,
-        resolved_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', ticketId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  };
-
-  return { createTicket, updateTicket, closeTicket };
+  return { createCall, updateCall };
 }
 
-// Hook para tickets recentes
-export function useRecentTickets() {
-  const [recentTickets, setRecentTickets] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+// Hook para operações de mensagens
+export function useMessageOperations() {
   const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchRecentTickets = async () => {
-      if (!user) return;
-      
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('tickets')
-          .select(`
-            *,
-            assignee:profiles!tickets_assignee_id_fkey(name, email),
-            reporter:profiles!tickets_reporter_id_fkey(name, email)
-          `)
-          .order('created_at', { ascending: false })
-          .limit(3);
+  const createMessage = async (messageData: any) => {
+    if (!user) throw new Error('Utilizador não autenticado');
 
-        if (error) throw error;
-        setRecentTickets(data || []);
-      } catch (err) {
-        console.error('Erro ao carregar tickets recentes:', err);
-        setRecentTickets([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const { data, error } = await supabase
+      .from('message_history')
+      .insert({
+        phone_number: messageData.phone_number,
+        content: messageData.content
+      })
+      .select()
+      .single();
 
-    fetchRecentTickets();
-  }, [user]);
+    if (error) throw error;
+    return data;
+  };
 
-  return { recentTickets, loading };
+  const updateMessage = async (messageId: string, messageData: any) => {
+    if (!user) throw new Error('Utilizador não autenticado');
+
+    const { data, error } = await supabase
+      .from('message_history')
+      .update({
+        phone_number: messageData.phone_number,
+        content: messageData.content
+      })
+      .eq('id_message', parseInt(messageId))
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  return { createMessage, updateMessage };
 }
 
-// Hook otimizado para tarefas prioritárias ordenadas por prioridade e data
+// Hook para operações de utilizadores
+export function useUserOperations() {
+  const { user } = useAuth();
+
+  const updateUserProfile = async (userId: string, userData: any) => {
+    if (!user) throw new Error('Utilizador não autenticado');
+
+    const { data, error } = await supabase
+      .from('users')
+      .update({
+        name: userData.name,
+        email: userData.email,
+        phone_number: userData.phone_number || null
+      })
+      .eq('id_user', parseInt(userId))
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  return { updateUserProfile };
+}
+
+// Hooks simplificados para compatibilidade
+export function useInitializeDemoData() {
+  // Não aplicável para AMS-Database
+}
+
+export function useTicketOperations() {
+  return {
+    createTicket: () => Promise.reject('Tickets não disponíveis'),
+    updateTicket: () => Promise.reject('Tickets não disponíveis'),
+    closeTicket: () => Promise.reject('Tickets não disponíveis')
+  };
+}
+
+export function useRecentTickets() {
+  return { recentTickets: [], loading: false };
+}
+
 export function useHighPriorityTasks() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -490,40 +416,15 @@ export function useHighPriorityTasks() {
       
       try {
         setLoading(true);
-        // Query otimizada: busca todas as prioridades e ordena corretamente
         const { data, error } = await supabase
           .from('tasks')
-          .select(`
-            id,
-            title,
-            description,
-            status,
-            priority,
-            category,
-            team,
-            due_date,
-            created_at,
-            assignee:profiles!tasks_assignee_id_fkey(name, email),
-            creator:profiles!tasks_created_by_fkey(name, email)
-          `)
-          .eq('archived', false)
-          .in('status', ['pending', 'in_progress'])
-          .limit(10);
+          .select('*')
+          .eq('status', false) // tarefas não concluídas
+          .order('created_at', { ascending: false })
+          .limit(5);
 
         if (error) throw error;
-        
-        // Ordenar por prioridade (high -> medium -> low) e depois por data (mais antigas primeiro)
-        const sortedTasks = (data || []).sort((a, b) => {
-          const priorityOrder = { high: 3, medium: 2, low: 1 };
-          const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
-          
-          if (priorityDiff !== 0) return priorityDiff;
-          
-          // Mesma prioridade: mais antigas primeiro
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        }).slice(0, 5);
-
-        setTasks(sortedTasks);
+        setTasks(data || []);
       } catch (err) {
         console.error('Erro ao carregar tarefas prioritárias:', err);
         setTasks([]);
@@ -559,33 +460,20 @@ export function useDashboardStats() {
       try {
         setLoading(true);
         
-        // Get today's date
         const today = new Date().toISOString().split('T')[0];
         
-        // Fetch all stats in parallel
-        const [tasksResult, ticketsResult, callsResult, messagesResult] = await Promise.all([
+        const [tasksResult, callsResult, messagesResult] = await Promise.all([
           supabase.from('tasks').select('status', { count: 'exact' }),
-          supabase.from('tickets').select('status', { count: 'exact' }),
-          supabase.from('calls').select('created_at', { count: 'exact' }),
-          supabase.from('messages').select('created_at', { count: 'exact' })
+          supabase.from('call_history').select('created_at', { count: 'exact' }),
+          supabase.from('message_history').select('created_at', { count: 'exact' })
         ]);
 
-        // Count active tasks
-        const activeTasks = tasksResult.data?.filter(task => 
-          task.status === 'pending' || task.status === 'in_progress'
-        ).length || 0;
-
-        // Count open tickets
-        const openTickets = ticketsResult.data?.filter(ticket => 
-          ticket.status === 'open' || ticket.status === 'in_progress'
-        ).length || 0;
-
-        // Count today's calls
+        const activeTasks = tasksResult.data?.filter(task => !task.status).length || 0;
+        
         const todayCalls = callsResult.data?.filter(call => 
           call.created_at.startsWith(today)
         ).length || 0;
 
-        // Count today's messages
         const todayMessages = messagesResult.data?.filter(message => 
           message.created_at.startsWith(today)
         ).length || 0;
@@ -593,8 +481,8 @@ export function useDashboardStats() {
         setStats({
           totalTasks: tasksResult.count || 0,
           activeTasks,
-          totalTickets: ticketsResult.count || 0,
-          openTickets,
+          totalTickets: 0, // Não há tickets
+          openTickets: 0,
           totalCalls: callsResult.count || 0,
           todayCalls,
           totalMessages: messagesResult.count || 0,
@@ -617,186 +505,10 @@ export function useArchivedTasks() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
-
-  useEffect(() => {
-    const fetchArchivedTasks = async () => {
-      if (!user) return;
-      
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('tasks')
-          .select(`
-            *,
-            assignee:profiles!tasks_assignee_id_fkey(name, email),
-            creator:profiles!tasks_created_by_fkey(name, email)
-          `)
-          .eq('archived', true)
-          .order('updated_at', { ascending: false });
-
-        if (error) throw error;
-        setTasks(data || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erro ao carregar tarefas arquivadas');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchArchivedTasks();
-  }, [user]);
-
+  
   const refetch = async () => {
-    if (!user) return;
-    
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('tasks')
-        .select(`
-          *,
-          assignee:profiles!tasks_assignee_id_fkey(name, email),
-          creator:profiles!tasks_created_by_fkey(name, email)
-        `)
-        .eq('archived', true)
-        .order('updated_at', { ascending: false });
-
-      if (error) throw error;
-      setTasks(data || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar tarefas arquivadas');
-    } finally {
-      setLoading(false);
-    }
+    // Não há campo archived na tabela tasks
   };
 
   return { tasks, loading, error, refetch };
-}
-
-// Hook para operações de chamadas
-export function useCallOperations() {
-  const { user } = useAuth();
-
-  const createCall = async (callData: any) => {
-    if (!user) throw new Error('Utilizador não autenticado');
-
-    const { data, error } = await supabase
-      .from('calls')
-      .insert({
-        caller_number: callData.caller_number,
-        receiver_number: callData.receiver_number,
-        status: callData.status,
-        duration: callData.duration,
-        notes: callData.notes,
-        handled_by: user.id
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  };
-
-  const updateCall = async (callId: string, callData: any) => {
-    if (!user) throw new Error('Utilizador não autenticado');
-
-    const { data, error } = await supabase
-      .from('calls')
-      .update({
-        caller_number: callData.caller_number,
-        receiver_number: callData.receiver_number,
-        status: callData.status,
-        duration: callData.duration,
-        notes: callData.notes,
-        ended_at: callData.status === 'completed' ? new Date().toISOString() : null
-      })
-      .eq('id', callId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  };
-
-  return { createCall, updateCall };
-}
-
-// Hook para operações de mensagens
-export function useMessageOperations() {
-  const { user } = useAuth();
-
-  const createMessage = async (messageData: any) => {
-    if (!user) throw new Error('Utilizador não autenticado');
-
-    const { data, error } = await supabase
-      .from('messages')
-      .insert({
-        sender_number: messageData.sender_number,
-        receiver_number: messageData.receiver_number,
-        content: messageData.content,
-        message_type: messageData.message_type,
-        status: messageData.status,
-        media_url: messageData.media_url || null,
-        processed_by: user.id
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  };
-
-  const updateMessage = async (messageId: string, messageData: any) => {
-    if (!user) throw new Error('Utilizador não autenticado');
-
-    const { data, error } = await supabase
-      .from('messages')
-      .update({
-        sender_number: messageData.sender_number,
-        receiver_number: messageData.receiver_number,
-        content: messageData.content,
-        message_type: messageData.message_type,
-        status: messageData.status,
-        media_url: messageData.media_url || null,
-        delivered_at: messageData.status === 'delivered' || messageData.status === 'read' ? new Date().toISOString() : null,
-        read_at: messageData.status === 'read' ? new Date().toISOString() : null
-      })
-      .eq('id', messageId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  };
-
-  return { createMessage, updateMessage };
-}
-
-// Hook para operações de utilizadores
-export function useUserOperations() {
-  const { user } = useAuth();
-
-  const updateUserProfile = async (userId: string, userData: any) => {
-    if (!user) throw new Error('Utilizador não autenticado');
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .update({
-        name: userData.name,
-        email: userData.email,
-        role: userData.role,
-        team: userData.team,
-        avatar_url: userData.avatar_url || null,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', userId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  };
-
-  return { updateUserProfile };
 }

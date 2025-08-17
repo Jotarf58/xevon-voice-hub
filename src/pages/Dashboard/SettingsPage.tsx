@@ -77,58 +77,26 @@ export const SettingsPage: React.FC = () => {
 
   // Load settings from database
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const { data: settings, error } = await supabase
-          .from('settings')
-          .select('*');
+    // AMS-Database não tem tabela settings, usar valores padrão
+    setThemeConfig({
+      primaryColor: '#ef4444',
+      darkMode: false,
+      compactMode: false
+    });
 
-        if (error) throw error;
+    setSystemSettings({
+      autoBackup: true,
+      maintenanceMode: false,
+      debugMode: false,
+      logLevel: 'info'
+    });
 
-        if (settings) {
-          const settingsMap = settings.reduce((acc, setting) => {
-            acc[setting.setting_key] = setting.setting_value;
-            return acc;
-          }, {} as Record<string, any>);
-
-          setThemeConfig({
-            primaryColor: settingsMap.theme_primary_color || '#ef4444',
-            darkMode: settingsMap.theme_dark_mode || false,
-            compactMode: settingsMap.theme_compact_mode || false
-          });
-
-          setSystemSettings({
-            autoBackup: settingsMap.system_auto_backup || true,
-            maintenanceMode: settingsMap.system_maintenance_mode || false,
-            debugMode: settingsMap.system_debug_mode || false,
-            logLevel: settingsMap.system_log_level || 'info'
-          });
-        }
-      } catch (error) {
-        console.error('Error loading settings:', error);
-        toast({
-          title: "Erro",
-          description: "Erro ao carregar configurações.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadSettings();
-  }, [toast]);
+    setLoading(false);
+  }, []);
 
   const updateSetting = async (key: string, value: any) => {
-    const { error } = await supabase
-      .from('settings')
-      .upsert({
-        setting_key: key,
-        setting_value: value,
-        updated_by: user?.id
-      });
-
-    if (error) throw error;
+    // AMS-Database não tem tabela settings, apenas atualizar estado local
+    console.log('Setting updated locally:', key, value);
   };
 
   const handleSaveTheme = async () => {

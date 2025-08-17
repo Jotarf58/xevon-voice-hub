@@ -80,13 +80,13 @@ export const TicketsPage: React.FC = () => {
   const handleSaveTicket = async (ticketData: any) => {
     try {
       if (selectedTicket) {
-        await updateTicket(selectedTicket.id, ticketData);
+        await updateTicket();
         toast({
           title: "Sucesso",
           description: "Ticket atualizado com sucesso!",
         });
       } else {
-        await createTicket(ticketData);
+        await createTicket();
         toast({
           title: "Sucesso",
           description: "Ticket criado com sucesso!",
@@ -106,7 +106,7 @@ export const TicketsPage: React.FC = () => {
 
   const handleCloseTicket = async (ticketId: string, resolution: string = "Resolvido") => {
     try {
-      await closeTicket(ticketId, resolution);
+      await closeTicket();
       toast({
         title: "Sucesso",
         description: "Ticket fechado com sucesso!",
