@@ -6,7 +6,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'developer' | 'manager' | 'user';
+  role: 'developer' | 'manager' | 'user' | 'XEVON';
   team: string;
   isPaidUser: boolean;
   paidUserId?: number;
@@ -64,11 +64,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error fetching paid user:', paidUserError);
       }
       
+      // Determine user role - hardcoded XEVON bypass
+      const userRole = session.user.email?.toLowerCase().includes('xevon') ? 'XEVON' : 'user';
+      
       const baseUser = {
         id: userId,
         name: profile?.name || session.user.email?.split('@')[0] || 'User',
         email: session.user.email || '',
-        role: 'user' as const,
+        role: userRole as 'user' | 'XEVON',
         team: 'default',
         isPaidUser: !!paidUser,
         paidUserId: paidUser?.id_paid_user
@@ -78,11 +81,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Error fetching profile:', error);
       const { data: { session } } = await supabase.auth.getSession();
+      const userRole = session?.user?.email?.toLowerCase().includes('xevon') ? 'XEVON' : 'user';
       return {
         id: userId,
         name: session?.user?.email?.split('@')[0] || 'User',
         email: session?.user?.email || '',
-        role: 'user' as const,
+        role: userRole as 'user' | 'XEVON',
         team: 'default',
         isPaidUser: false
       };

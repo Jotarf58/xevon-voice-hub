@@ -22,6 +22,26 @@ export const useUserModules = () => {
       try {
         setLoading(true);
         
+        // XEVON role bypass - show all modules
+        if (user.role === 'XEVON') {
+          const { data: allModules, error: modulesError } = await supabase
+            .from('modules')
+            .select('*');
+
+          if (modulesError) {
+            console.error('Error fetching all modules:', modulesError);
+            setError('Erro ao buscar módulos');
+            setLoading(false);
+            return;
+          }
+
+          setModules(allModules || []);
+          setError(null);
+          setLoading(false);
+          return;
+        }
+
+        // Normal flow for regular users
         // First, get the paid_user by email
         const { data: paidUser, error: paidUserError } = await supabase
           .from('paid_user')
