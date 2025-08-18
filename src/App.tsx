@@ -7,12 +7,12 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { LandingPage } from "@/pages/LandingPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { DashboardHome } from "@/pages/Dashboard/DashboardHome";
-import { TasksPage } from "@/pages/Dashboard/TasksPage";
-import { TicketsPage } from "@/pages/Dashboard/TicketsPage";
-import { CallsPage } from "@/pages/Dashboard/CallsPage";
-import { MessagesPage } from "@/pages/Dashboard/MessagesPage";
-import { UsersPage } from "@/pages/Dashboard/UsersPage";
-import { SettingsPage } from "@/pages/Dashboard/SettingsPage";
+import TasksPage from "@/pages/Dashboard/TasksPage";
+import TicketsPage from "@/pages/Dashboard/TicketsPage";
+import CallsPage from "@/pages/Dashboard/CallsPage";
+import MessagesPage from "@/pages/Dashboard/MessagesPage";
+import UsersPage from "@/pages/Dashboard/UsersPage";
+import SettingsPage from "@/pages/Dashboard/SettingsPage";
 import { DashboardLayout } from "@/components/Layout/DashboardLayout";
 import NotFound from "./pages/NotFound";
 

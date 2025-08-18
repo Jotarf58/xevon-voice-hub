@@ -512,3 +512,50 @@ export function useArchivedTasks() {
 
   return { tasks, loading, error, refetch };
 }
+
+// Generic data fetching hook for compatibility
+export function useSupabaseData({ table, select = '*', orderBy }: { 
+  table: string; 
+  select?: string; 
+  orderBy?: { column: string; ascending: boolean };
+}) {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+
+  const fetchData = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      let query = supabase.from(table).select(select);
+      
+      if (orderBy) {
+        query = query.order(orderBy.column, { ascending: orderBy.ascending });
+      }
+      
+      const { data: result, error } = await query;
+      
+      if (error) throw error;
+      setData(result || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : `Erro ao carregar ${table}`);
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [user, table]);
+
+  const refetch = () => {
+    return fetchData();
+  };
+
+  return { data, loading, error, refetch };
+}

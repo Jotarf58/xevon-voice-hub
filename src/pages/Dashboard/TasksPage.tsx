@@ -167,7 +167,7 @@ const TasksPageContent = () => {
       <TaskFormDialog 
         open={isFormOpen} 
         onOpenChange={setIsFormOpen}
-        onSuccess={() => {
+        onSave={() => {
           refetch();
           setIsFormOpen(false);
         }}
@@ -177,6 +177,15 @@ const TasksPageContent = () => {
         task={selectedTask}
         open={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
+        onEdit={(task) => {
+          setSelectedTask(task);
+          setIsFormOpen(true);
+          setIsDetailsOpen(false);
+        }}
+        onDelete={() => {
+          refetch();
+          setIsDetailsOpen(false);
+        }}
       />
     </div>
   );

@@ -171,7 +171,7 @@ const TicketsPageContent = () => {
       <TicketFormDialog 
         open={isFormOpen} 
         onOpenChange={setIsFormOpen}
-        onSuccess={() => {
+        onSave={() => {
           refetch();
           setIsFormOpen(false);
         }}
@@ -181,6 +181,15 @@ const TicketsPageContent = () => {
         ticket={selectedTicket}
         open={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
+        onEdit={(ticket) => {
+          setSelectedTicket(ticket);
+          setIsFormOpen(true);
+          setIsDetailsOpen(false);
+        }}
+        onDelete={() => {
+          refetch();
+          setIsDetailsOpen(false);
+        }}
       />
     </div>
   );

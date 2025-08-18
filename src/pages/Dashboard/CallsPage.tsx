@@ -158,7 +158,7 @@ const CallsPageContent = () => {
       <CallFormDialog 
         open={isFormOpen} 
         onOpenChange={setIsFormOpen}
-        onSuccess={() => {
+        onSave={() => {
           refetch();
           setIsFormOpen(false);
         }}
@@ -168,6 +168,11 @@ const CallsPageContent = () => {
         call={selectedCall}
         open={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
+        onEdit={(call) => {
+          setSelectedCall(call);
+          setIsFormOpen(true);
+          setIsDetailsOpen(false);
+        }}
       />
     </div>
   );

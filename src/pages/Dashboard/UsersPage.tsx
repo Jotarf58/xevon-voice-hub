@@ -146,7 +146,7 @@ const UsersPageContent = () => {
       <UserFormDialog 
         open={isFormOpen} 
         onOpenChange={setIsFormOpen}
-        onSuccess={() => {
+        onSave={() => {
           refetch();
           setIsFormOpen(false);
         }}

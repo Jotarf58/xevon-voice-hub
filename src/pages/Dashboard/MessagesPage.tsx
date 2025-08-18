@@ -136,7 +136,7 @@ const MessagesPageContent = () => {
       <MessageFormDialog 
         open={isFormOpen} 
         onOpenChange={setIsFormOpen}
-        onSuccess={() => {
+        onSave={() => {
           refetch();
           setIsFormOpen(false);
         }}
@@ -146,6 +146,18 @@ const MessagesPageContent = () => {
         message={selectedMessage}
         open={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
+        onEdit={(message) => {
+          setSelectedMessage(message);
+          setIsFormOpen(true);
+          setIsDetailsOpen(false);
+        }}
+        onDelete={() => {
+          refetch();
+          setIsDetailsOpen(false);
+        }}
+        onConvertToTicket={() => {
+          setIsDetailsOpen(false);
+        }}
       />
     </div>
   );
