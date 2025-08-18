@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { 
   LayoutDashboard, 
   CheckSquare, 
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserModules } from "@/hooks/useModules";
 import {
   Sidebar,
   SidebarContent,
@@ -28,23 +29,26 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-const menuItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Tarefas", url: "/dashboard/tasks", icon: CheckSquare },
-  { title: "Tickets", url: "/dashboard/tickets", icon: Ticket },
-  { title: "Chamadas", url: "/dashboard/calls", icon: Phone },
-  { title: "Mensagens", url: "/dashboard/messages", icon: MessageSquare },
-];
-
-const adminMenuItems = [
-  { title: "Utilizadores", url: "/dashboard/users", icon: Users },
-  { title: "Configurações", url: "/dashboard/settings", icon: Settings },
-];
+// Map module names to navigation items
+const getModuleNavItem = (moduleName: string) => {
+  const moduleMap: Record<string, { title: string; url: string; icon: any }> = {
+    'dashboard': { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+    'calls': { title: 'Chamadas', url: '/dashboard/calls', icon: Phone },
+    'messages': { title: 'Mensagens', url: '/dashboard/messages', icon: MessageSquare },
+    'tasks': { title: 'Tarefas', url: '/dashboard/tasks', icon: CheckSquare },
+    'tickets': { title: 'Tickets', url: '/dashboard/tickets', icon: Ticket },
+    'users': { title: 'Utilizadores', url: '/dashboard/users', icon: Users },
+    'settings': { title: 'Configurações', url: '/dashboard/settings', icon: Settings },
+  };
+  
+  return moduleMap[moduleName?.toLowerCase()] || null;
+};
 
 export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
   const { user, logout } = useAuth();
+  const { modules, loading: modulesLoading } = useUserModules();
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
@@ -64,6 +68,26 @@ export function AppSidebar() {
       .toUpperCase()
       .slice(0, 2);
   };
+
+  // Generate navigation items based on user modules
+  const navigationItems = useMemo(() => {
+    if (modulesLoading || !user?.isPaidUser) {
+      // Default items for non-paid users or while loading
+      return [{ title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard }];
+    }
+
+    const items = modules
+      .map(module => getModuleNavItem(module.name || ''))
+      .filter(item => item !== null);
+
+    // Always include dashboard as first item
+    const dashboardExists = items.some(item => item?.url === '/dashboard');
+    if (!dashboardExists) {
+      items.unshift({ title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard });
+    }
+
+    return items;
+  }, [modules, modulesLoading, user?.isPaidUser]);
 
   return (
     <Sidebar 
@@ -122,7 +146,7 @@ export function AppSidebar() {
           )}
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {menuItems.map((item) => {
+              {navigationItems.map((item) => {
                 const active = isActive(item.url);
                 return (
                   <SidebarMenuItem key={item.title}>
@@ -149,40 +173,18 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Admin Menu - Only for developers and managers */}
-        {(user?.role === 'developer' || user?.role === 'manager') && (
+        {/* Info for non-paid users */}
+        {!user?.isPaidUser && (
           <SidebarGroup className="px-3 py-2">
             {!collapsed && (
               <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2">
-                Admin
+                Info
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
-              <SidebarMenu className="space-y-1">
-                {adminMenuItems.map((item) => {
-                  const active = isActive(item.url);
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                       <NavLink 
-                         to={item.url} 
-                         end 
-                         className={`
-                           flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 w-full relative
-                           ${active 
-                             ? "bg-black text-white font-medium shadow-lg" 
-                             : "text-foreground hover:bg-nav-hover hover:text-nav-hover-foreground"
-                           }
-                           ${collapsed ? "justify-center px-2" : ""}
-                         `}
-                         title={collapsed ? item.title : undefined}
-                       >
-                        <item.icon className="h-5 w-5 flex-shrink-0" />
-                        {!collapsed && <span className="truncate">{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
+              <div className="px-3 py-2 text-sm text-muted-foreground">
+                {!collapsed && "Acesso limitado - Usuário não pago"}
+              </div>
             </SidebarGroupContent>
           </SidebarGroup>
         )}
@@ -201,7 +203,7 @@ export function AppSidebar() {
                   {user.name}
                 </p>
                 <p className="text-xs text-muted-foreground capitalize">
-                  {user.role} • {user.team}
+                  {user.isPaidUser ? 'Usuário Pago' : 'Usuário Gratuito'}
                 </p>
               </div>
             </div>
