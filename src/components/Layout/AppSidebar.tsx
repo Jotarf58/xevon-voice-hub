@@ -71,8 +71,16 @@ export function AppSidebar() {
 
   // Generate navigation items based on user modules
   const navigationItems = useMemo(() => {
-    if (modulesLoading || !user?.isPaidUser) {
-      // Default items for non-paid users or while loading
+    if (modulesLoading) {
+      // Default items while loading
+      return [{ title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard }];
+    }
+
+    // Check if user has access to modules (paid user or XEVON role)
+    const hasModuleAccess = user?.isPaidUser || user?.role === 'XEVON';
+    
+    if (!hasModuleAccess) {
+      // Default items for non-paid users without XEVON role
       return [{ title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard }];
     }
 
@@ -87,7 +95,7 @@ export function AppSidebar() {
     }
 
     return items;
-  }, [modules, modulesLoading, user?.isPaidUser]);
+  }, [modules, modulesLoading, user?.isPaidUser, user?.role]);
 
   return (
     <Sidebar 
