@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { 
   LayoutDashboard, 
@@ -97,6 +98,9 @@ export function AppSidebar() {
     return items;
   }, [modules, modulesLoading, user?.isPaidUser, user?.role]);
 
+  // Check if should show limited access info
+  const showLimitedAccess = !user?.isPaidUser && user?.role !== 'XEVON';
+
   return (
     <Sidebar 
       className={`${collapsed ? "w-20" : "w-64"} border-r border-border bg-card transition-all duration-300`}
@@ -181,8 +185,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Info for non-paid users */}
-        {!user?.isPaidUser && (
+        {/* Info for non-paid users (only show if not XEVON) */}
+        {showLimitedAccess && (
           <SidebarGroup className="px-3 py-2">
             {!collapsed && (
               <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2">
@@ -211,7 +215,7 @@ export function AppSidebar() {
                   {user.name}
                 </p>
                 <p className="text-xs text-muted-foreground capitalize">
-                  {user.isPaidUser ? 'Usuário Pago' : 'Usuário Gratuito'}
+                  {user.role === 'XEVON' ? 'Administrador' : user.isPaidUser ? 'Usuário Pago' : 'Usuário Gratuito'}
                 </p>
               </div>
             </div>
