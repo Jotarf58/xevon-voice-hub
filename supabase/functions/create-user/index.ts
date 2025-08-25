@@ -56,14 +56,31 @@ serve(async (req) => {
       )
     }
 
-    // Check if user has admin privileges (developer or manager role)
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
+    // Check if user has admin privileges using secure database lookup
+    const { data: userRecord, error: userError } = await supabaseAdmin
+      .from('supabase_users')
+      .select(`
+        id_user,
+        supabase_roles!inner(name)
+      `)
       .eq('user_id', user.id)
       .single()
 
-    if (profileError || !profile || !['developer', 'manager'].includes(profile.role)) {
+    if (userError || !userRecord) {
+      console.log('User not found in supabase_users table:', userError);
+      return new Response(
+        JSON.stringify({ error: 'User not found in system' }),
+        { 
+          status: 403, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    const userRole = userRecord.supabase_roles?.name;
+    
+    if (!userRole || !['XEVON', 'Admin'].includes(userRole)) {
+      console.log('Insufficient permissions. User role:', userRole);
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions' }),
         { 
@@ -86,14 +103,12 @@ serve(async (req) => {
       )
     }
 
-    // Check if user with this email already exists
-    const { data: existingProfile, error: checkError } = await supabaseAdmin
-      .from('profiles')
-      .select('email')
-      .eq('email', email)
-      .single()
-
-    if (existingProfile) {
+    // Check if user with this email already exists in auth
+    const { data: existingAuthUser, error: authCheckError } = await supabaseAdmin.auth.admin.listUsers();
+    
+    const userExists = existingAuthUser?.users?.some(u => u.email === email);
+    
+    if (userExists) {
       return new Response(
         JSON.stringify({ error: 'User with this email already exists' }),
         { 
@@ -103,10 +118,27 @@ serve(async (req) => {
       )
     }
 
-    // Validate role permissions
-    if (profile.role === 'manager' && !['user'].includes(role)) {
+    // Get role ID for the requested role
+    const { data: targetRole, error: roleError } = await supabaseAdmin
+      .from('supabase_roles')
+      .select('id_role, name')
+      .eq('name', role)
+      .single();
+
+    if (roleError || !targetRole) {
       return new Response(
-        JSON.stringify({ error: 'Managers can only create users' }),
+        JSON.stringify({ error: `Invalid role: ${role}` }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Validate role permissions
+    if (userRole === 'Admin' && !['XEVON', 'Admin', 'Tech', 'User'].includes(role)) {
+      return new Response(
+        JSON.stringify({ error: 'Admins can only create XEVON, Admin, Tech, or User roles' }),
         { 
           status: 403, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -152,29 +184,30 @@ serve(async (req) => {
 
     console.log(`Auth user created with ID: ${authData.user.id}`);
 
-    // Wait a moment for the trigger to create the profile
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Update the profile with the provided details
-    const { data: profileData, error: updateProfileError } = await supabaseAdmin
-      .from('profiles')
-      .update({
-        name,
-        role,
-        team,
-        avatar_url: avatar_url || null
+    // Create user record in supabase_users table
+    const { data: supabaseUserData, error: createSupabaseUserError } = await supabaseAdmin
+      .from('supabase_users')
+      .insert({
+        user_id: authData.user.id,
+        email: email,
+        id_role: targetRole.id_role,
+        id_organization: null // Will be set later when user is assigned to organization
       })
-      .eq('user_id', authData.user.id)
-      .select('*')
+      .select(`
+        id_user,
+        email,
+        user_id,
+        supabase_roles!inner(name)
+      `)
       .single();
     
-    if (updateProfileError) {
-      console.error('Error updating profile:', updateProfileError);
-      // If updating profile fails, clean up the auth user
+    if (createSupabaseUserError) {
+      console.error('Error creating supabase user record:', createSupabaseUserError);
+      // Clean up the auth user if supabase_users creation fails
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
       
       return new Response(
-        JSON.stringify({ error: 'Failed to create user profile' }),
+        JSON.stringify({ error: 'Failed to create user record in system' }),
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -182,12 +215,17 @@ serve(async (req) => {
       );
     }
 
-    console.log('Profile created successfully:', profileData)
+    console.log('Supabase user record created successfully:', supabaseUserData)
 
     return new Response(
       JSON.stringify({ 
         message: 'User created successfully',
-        user: profileData
+        user: {
+          id: supabaseUserData.user_id,
+          email: supabaseUserData.email,
+          role: supabaseUserData.supabase_roles.name,
+          name: name
+        }
       }),
       { 
         status: 200, 

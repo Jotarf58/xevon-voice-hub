@@ -56,14 +56,31 @@ serve(async (req) => {
       )
     }
 
-    // Check if user has admin privileges (developer or manager role)
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
+    // Check if user has admin privileges using secure database lookup
+    const { data: userRecord, error: userError } = await supabaseAdmin
+      .from('supabase_users')
+      .select(`
+        id_user,
+        supabase_roles!inner(name)
+      `)
       .eq('user_id', user.id)
       .single()
 
-    if (profileError || !profile || !['developer', 'manager'].includes(profile.role)) {
+    if (userError || !userRecord) {
+      console.log('User not found in supabase_users table:', userError);
+      return new Response(
+        JSON.stringify({ error: 'User not found in system' }),
+        { 
+          status: 403, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    const userRole = userRecord.supabase_roles?.name;
+    
+    if (!userRole || !['XEVON', 'Admin'].includes(userRole)) {
+      console.log('Insufficient permissions. User role:', userRole);
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions' }),
         { 
@@ -86,36 +103,60 @@ serve(async (req) => {
       )
     }
 
-    // Validate role permissions
-    if (profile.role === 'manager' && !['user'].includes(role)) {
-      return new Response(
-        JSON.stringify({ error: 'Managers can only modify user accounts' }),
-        { 
-          status: 403, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+    // Get role ID for the requested role if role is being updated
+    let targetRoleId = null;
+    if (role) {
+      const { data: targetRole, error: roleError } = await supabaseAdmin
+        .from('supabase_roles')
+        .select('id_role, name')
+        .eq('name', role)
+        .single();
+
+      if (roleError || !targetRole) {
+        return new Response(
+          JSON.stringify({ error: `Invalid role: ${role}` }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
+      
+      targetRoleId = targetRole.id_role;
+
+      // Validate role permissions
+      if (userRole === 'Admin' && !['XEVON', 'Admin', 'Tech', 'User'].includes(role)) {
+        return new Response(
+          JSON.stringify({ error: 'Admins can only assign XEVON, Admin, Tech, or User roles' }),
+          { 
+            status: 403, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
     }
 
-    console.log(`Updating user with ID: ${id}, name: ${name}, role: ${role}, team: ${team}`);
+    console.log(`Updating user with ID: ${id}, email: ${email}, role: ${role}`);
 
-    // Update the profile
-    const { data: updatedProfile, error: updateError } = await supabaseAdmin
-      .from('profiles')
-      .update({
-        name,
+    // Update the user record in supabase_users table
+    const updateData: any = {};
+    if (email) updateData.email = email;
+    if (targetRoleId) updateData.id_role = targetRoleId;
+
+    const { data: updatedUser, error: updateError } = await supabaseAdmin
+      .from('supabase_users')
+      .update(updateData)
+      .eq('id_user', id)
+      .select(`
+        id_user,
         email,
-        role,
-        team,
-        avatar_url: avatar_url || null,
-        updated_at: new Date()
-      })
-      .eq('id', id)
-      .select()
+        user_id,
+        supabase_roles!inner(name)
+      `)
       .single()
 
     if (updateError) {
-      console.error('Profile update error:', updateError)
+      console.error('User update error:', updateError)
       return new Response(
         JSON.stringify({ error: updateError.message }),
         { 
@@ -125,12 +166,16 @@ serve(async (req) => {
       )
     }
 
-    console.log('Profile updated successfully:', updatedProfile)
+    console.log('User updated successfully:', updatedUser)
 
     return new Response(
       JSON.stringify({ 
         message: 'User updated successfully',
-        user: updatedProfile
+        user: {
+          id: updatedUser.user_id,
+          email: updatedUser.email,
+          role: updatedUser.supabase_roles.name
+        }
       }),
       { 
         status: 200, 

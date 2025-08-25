@@ -42,53 +42,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.email) return null;
       
-      // Check if user exists in users table
-      const { data: profile, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', session.user.email)
-        .maybeSingle();
-        
-      if (error) {
-        console.error('Error fetching profile:', error);
-      }
-
-      // Check if user is in an organization
-      const { data: organization, error: organizationError } = await supabase
-        .from('organization')
-        .select('*')
-        .eq('email', session.user.email)
+      // Secure lookup: Get user data from supabase_users with role and organization info
+      const { data: supabaseUser, error: userError } = await supabase
+        .from('supabase_users')
+        .select(`
+          *,
+          supabase_roles!inner(name, permissions),
+          organization!inner(name, id_organization)
+        `)
+        .eq('user_id', userId)
         .maybeSingle();
 
-      if (organizationError) {
-        console.error('Error fetching organization:', organizationError);
+      if (userError) {
+        console.error('Error fetching supabase user:', userError);
+        // Return default user if no user record found
+        return {
+          id: userId,
+          name: session.user.email?.split('@')[0] || 'User',
+          email: session.user.email || '',
+          role: 'user' as const,
+          team: 'default',
+          isPaidUser: false,
+          organizationId: undefined
+        };
       }
-      
-      // Determine user role - hardcoded XEVON bypass
-      const userRole = session.user.email?.toLowerCase().includes('xevon') ? 'XEVON' : 'user';
+
+      if (!supabaseUser) {
+        // User exists in auth but not in supabase_users yet
+        console.warn('User found in auth but not in supabase_users table');
+        return {
+          id: userId,
+          name: session.user.email?.split('@')[0] || 'User',
+          email: session.user.email || '',
+          role: 'user' as const,
+          team: 'default',
+          isPaidUser: false,
+          organizationId: undefined
+        };
+      }
+
+      const roleName = supabaseUser.supabase_roles?.name || 'user';
+      const organizationName = supabaseUser.organization?.name || '';
       
       const baseUser = {
         id: userId,
-        name: profile?.name || organization?.name || session.user.email?.split('@')[0] || 'User',
+        name: organizationName || session.user.email?.split('@')[0] || 'User',
         email: session.user.email || '',
-        role: userRole as 'user' | 'XEVON',
+        role: roleName as 'developer' | 'manager' | 'user' | 'XEVON',
         team: 'default',
-        isPaidUser: !!organization,
-        organizationId: organization?.id_organization
+        isPaidUser: !!supabaseUser.id_organization,
+        organizationId: supabaseUser.id_organization
       };
 
       return baseUser;
     } catch (error) {
       console.error('Error fetching profile:', error);
       const { data: { session } } = await supabase.auth.getSession();
-      const userRole = session?.user?.email?.toLowerCase().includes('xevon') ? 'XEVON' : 'user';
       return {
         id: userId,
         name: session?.user?.email?.split('@')[0] || 'User',
         email: session?.user?.email || '',
-        role: userRole as 'user' | 'XEVON',
+        role: 'user' as const,
         team: 'default',
-        isPaidUser: false
+        isPaidUser: false,
+        organizationId: undefined
       };
     }
   };

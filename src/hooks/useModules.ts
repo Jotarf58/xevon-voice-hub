@@ -13,7 +13,7 @@ export const useUserModules = () => {
 
   useEffect(() => {
     const fetchUserModules = async () => {
-      if (!user?.email) {
+      if (!user) {
         setModules([]);
         setLoading(false);
         return;
@@ -41,32 +41,18 @@ export const useUserModules = () => {
           return;
         }
 
-        // Normal flow for regular users
-        // First, get the organization by email
-        const { data: organization, error: organizationError } = await supabase
-          .from('organization')
-          .select('id_organization')
-          .eq('email', user.email)
-          .maybeSingle();
-
-        if (organizationError) {
-          console.error('Error fetching organization:', organizationError);
-          setError('Erro ao buscar organização');
-          setLoading(false);
-          return;
-        }
-
-        if (!organization) {
+        // For regular users, use organization ID from user context
+        if (!user.organizationId) {
           setModules([]);
           setLoading(false);
           return;
         }
 
-        // Get user modules through the junction table
+        // Get user modules through the junction table using organizationId
         const { data: userModuleRelations, error: relationsError } = await supabase
           .from('tmodules_torganization')
           .select('id_module')
-          .eq('id_organization', organization.id_organization);
+          .eq('id_organization', user.organizationId);
 
         if (relationsError) {
           console.error('Error fetching user module relations:', relationsError);
@@ -106,7 +92,7 @@ export const useUserModules = () => {
     };
 
     fetchUserModules();
-  }, [user?.email]);
+  }, [user?.organizationId, user?.role]);
 
   return { modules, loading, error };
 };

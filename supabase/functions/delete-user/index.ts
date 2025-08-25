@@ -56,14 +56,31 @@ serve(async (req) => {
       )
     }
 
-    // Check if user has admin privileges (developer or manager role)
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
+    // Check if user has admin privileges using secure database lookup
+    const { data: userRecord, error: userError } = await supabaseAdmin
+      .from('supabase_users')
+      .select(`
+        id_user,
+        supabase_roles!inner(name)
+      `)
       .eq('user_id', user.id)
       .single()
 
-    if (profileError || !profile || !['developer', 'manager'].includes(profile.role)) {
+    if (userError || !userRecord) {
+      console.log('User not found in supabase_users table:', userError);
+      return new Response(
+        JSON.stringify({ error: 'User not found in system' }),
+        { 
+          status: 403, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    const userRole = userRecord.supabase_roles?.name;
+    
+    if (!userRole || !['XEVON', 'Admin'].includes(userRole)) {
+      console.log('Insufficient permissions. User role:', userRole);
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions' }),
         { 
