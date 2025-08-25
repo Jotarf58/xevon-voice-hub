@@ -20,6 +20,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           id_budget: number
+          id_organization: number | null
           phone_number: string | null
           requester_email: string | null
           requester_name: string | null
@@ -32,6 +33,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id_budget?: number
+          id_organization?: number | null
           phone_number?: string | null
           requester_email?: string | null
           requester_name?: string | null
@@ -44,6 +46,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id_budget?: number
+          id_organization?: number | null
           phone_number?: string | null
           requester_email?: string | null
           requester_name?: string | null
@@ -52,6 +55,13 @@ export type Database = {
           total_value?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "budgets_id_organization_fkey"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
           {
             foreignKeyName: "fk_budgets_callers"
             columns: ["phone_number"]
@@ -67,6 +77,7 @@ export type Database = {
           description: string | null
           end_time: string | null
           id_event: number
+          id_organization: number | null
           id_user: number | null
           is_all_day: boolean | null
           location: string | null
@@ -79,6 +90,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id_event?: number
+          id_organization?: number | null
           id_user?: number | null
           is_all_day?: boolean | null
           location?: string | null
@@ -91,6 +103,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id_event?: number
+          id_organization?: number | null
           id_user?: number | null
           is_all_day?: boolean | null
           location?: string | null
@@ -99,6 +112,13 @@ export type Database = {
           title?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "calendar_events_id_organization_fkey"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
           {
             foreignKeyName: "fk_calendar_users"
             columns: ["id_user"]
@@ -113,6 +133,7 @@ export type Database = {
           archive_reason: string | null
           archived_at: string | null
           id_archive: number
+          id_organization: number | null
           original_call_id: number | null
           phone_number: string | null
           status: boolean | null
@@ -123,6 +144,7 @@ export type Database = {
           archive_reason?: string | null
           archived_at?: string | null
           id_archive?: number
+          id_organization?: number | null
           original_call_id?: number | null
           phone_number?: string | null
           status?: boolean | null
@@ -133,18 +155,28 @@ export type Database = {
           archive_reason?: string | null
           archived_at?: string | null
           id_archive?: number
+          id_organization?: number | null
           original_call_id?: number | null
           phone_number?: string | null
           status?: boolean | null
           total_call_time?: string | null
           transcription?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "call_archive_id_organization_fkey"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
+        ]
       }
       call_history: {
         Row: {
           created_at: string | null
           id_call: number
+          id_organization: number | null
           phone_number: string | null
           status: boolean | null
           total_call_time: string | null
@@ -153,6 +185,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id_call?: number
+          id_organization?: number | null
           phone_number?: string | null
           status?: boolean | null
           total_call_time?: string | null
@@ -161,12 +194,20 @@ export type Database = {
         Update: {
           created_at?: string | null
           id_call?: number
+          id_organization?: number | null
           phone_number?: string | null
           status?: boolean | null
           total_call_time?: string | null
           transcription?: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "call_history_id_organization_fkey"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
           {
             foreignKeyName: "fk_call_callers"
             columns: ["phone_number"]
@@ -181,6 +222,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           id_caller: number
+          id_organization: number | null
           name: string | null
           phone_number: string | null
         }
@@ -188,6 +230,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id_caller?: number
+          id_organization?: number | null
           name?: string | null
           phone_number?: string | null
         }
@@ -195,10 +238,19 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id_caller?: number
+          id_organization?: number | null
           name?: string | null
           phone_number?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "callers_id_organization_fkey"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
+        ]
       }
       elevenlabs_agent: {
         Row: {
@@ -296,6 +348,7 @@ export type Database = {
           archived_at: string | null
           content: string | null
           id_archive: number
+          id_organization: number | null
           original_message_id: number | null
           phone_number: string | null
         }
@@ -304,6 +357,7 @@ export type Database = {
           archived_at?: string | null
           content?: string | null
           id_archive?: number
+          id_organization?: number | null
           original_message_id?: number | null
           phone_number?: string | null
         }
@@ -312,28 +366,40 @@ export type Database = {
           archived_at?: string | null
           content?: string | null
           id_archive?: number
+          id_organization?: number | null
           original_message_id?: number | null
           phone_number?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "message_archive_id_organization_fkey"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
+        ]
       }
       message_history: {
         Row: {
           content: string | null
           created_at: string | null
           id_message: number
+          id_organization: number | null
           phone_number: string | null
         }
         Insert: {
           content?: string | null
           created_at?: string | null
           id_message?: number
+          id_organization?: number | null
           phone_number?: string | null
         }
         Update: {
           content?: string | null
           created_at?: string | null
           id_message?: number
+          id_organization?: number | null
           phone_number?: string | null
         }
         Relationships: [
@@ -343,6 +409,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "callers"
             referencedColumns: ["phone_number"]
+          },
+          {
+            foreignKeyName: "message_history_id_organization_fkey"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
           },
         ]
       }
@@ -465,20 +538,37 @@ export type Database = {
           id_organization: number | null
           id_role: number | null
           id_user: number
+          user_id: string | null
         }
         Insert: {
           email?: string | null
           id_organization?: number | null
           id_role?: number | null
           id_user?: number
+          user_id?: string | null
         }
         Update: {
           email?: string | null
           id_organization?: number | null
           id_role?: number | null
           id_user?: number
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_supabase_users_organization"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
+          {
+            foreignKeyName: "fk_supabase_users_role"
+            columns: ["id_role"]
+            isOneToOne: false
+            referencedRelation: "supabase_roles"
+            referencedColumns: ["id_role"]
+          },
           {
             foreignKeyName: "fk_users_org"
             columns: ["id_organization"]
@@ -517,6 +607,7 @@ export type Database = {
           category: string | null
           description: string | null
           id_archive: number
+          id_organization: number | null
           original_task_id: number | null
           phone_number: string | null
           status: boolean | null
@@ -528,6 +619,7 @@ export type Database = {
           category?: string | null
           description?: string | null
           id_archive?: number
+          id_organization?: number | null
           original_task_id?: number | null
           phone_number?: string | null
           status?: boolean | null
@@ -539,18 +631,28 @@ export type Database = {
           category?: string | null
           description?: string | null
           id_archive?: number
+          id_organization?: number | null
           original_task_id?: number | null
           phone_number?: string | null
           status?: boolean | null
           title?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "task_archive_id_organization_fkey"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
+        ]
       }
       tasks: {
         Row: {
           category: string | null
           created_at: string | null
           description: string | null
+          id_organization: number | null
           id_task: number
           phone_number: string | null
           status: boolean | null
@@ -560,6 +662,7 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           description?: string | null
+          id_organization?: number | null
           id_task?: number
           phone_number?: string | null
           status?: boolean | null
@@ -569,12 +672,21 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           description?: string | null
+          id_organization?: number | null
           id_task?: number
           phone_number?: string | null
           status?: boolean | null
           title?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_id_organization_fkey"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
+        ]
       }
       ticket_archive: {
         Row: {
@@ -583,6 +695,7 @@ export type Database = {
           category: string | null
           description: string | null
           id_archive: number
+          id_organization: number | null
           id_user: number | null
           original_ticket_id: number | null
           priority: string | null
@@ -594,6 +707,7 @@ export type Database = {
           category?: string | null
           description?: string | null
           id_archive?: number
+          id_organization?: number | null
           id_user?: number | null
           original_ticket_id?: number | null
           priority?: string | null
@@ -605,17 +719,27 @@ export type Database = {
           category?: string | null
           description?: string | null
           id_archive?: number
+          id_organization?: number | null
           id_user?: number | null
           original_ticket_id?: number | null
           priority?: string | null
           title?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ticket_archive_id_organization_fkey"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
+        ]
       }
       tickets: {
         Row: {
           category: string | null
           description: string | null
+          id_organization: number | null
           id_ticket: number
           id_user: number | null
           priority: string | null
@@ -624,6 +748,7 @@ export type Database = {
         Insert: {
           category?: string | null
           description?: string | null
+          id_organization?: number | null
           id_ticket?: number
           id_user?: number | null
           priority?: string | null
@@ -632,12 +757,21 @@ export type Database = {
         Update: {
           category?: string | null
           description?: string | null
+          id_organization?: number | null
           id_ticket?: number
           id_user?: number | null
           priority?: string | null
           title?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tickets_id_organization_fkey"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
+        ]
       }
       tmodules_torganization: {
         Row: {
@@ -748,7 +882,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      has_role: {
+        Args: { _role: string; _user_id: string }
+        Returns: boolean
+      }
+      user_organization_ids: {
+        Args: { _user_id: string }
+        Returns: number[]
+      }
     }
     Enums: {
       [_ in never]: never
