@@ -14,44 +14,138 @@ export type Database = {
   }
   public: {
     Tables: {
-      access: {
+      budgets: {
         Row: {
-          email: string
-          id_paid_user: number | null
-          id_role: number | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id_budget: number
+          phone_number: string | null
+          requester_email: string | null
+          requester_name: string | null
+          response_deadline: string | null
+          status: string | null
+          total_value: number | null
         }
         Insert: {
-          email: string
-          id_paid_user?: number | null
-          id_role?: number | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id_budget?: number
+          phone_number?: string | null
+          requester_email?: string | null
+          requester_name?: string | null
+          response_deadline?: string | null
+          status?: string | null
+          total_value?: number | null
         }
         Update: {
-          email?: string
-          id_paid_user?: number | null
-          id_role?: number | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id_budget?: number
+          phone_number?: string | null
+          requester_email?: string | null
+          requester_name?: string | null
+          response_deadline?: string | null
+          status?: string | null
+          total_value?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "access_id_paid_user_fkey"
-            columns: ["id_paid_user"]
+            foreignKeyName: "fk_budgets_callers"
+            columns: ["phone_number"]
             isOneToOne: false
-            referencedRelation: "paid_user"
-            referencedColumns: ["id_paid_user"]
-          },
-          {
-            foreignKeyName: "access_id_role_fkey"
-            columns: ["id_role"]
-            isOneToOne: false
-            referencedRelation: "roles"
-            referencedColumns: ["id_role"]
+            referencedRelation: "callers"
+            referencedColumns: ["phone_number"]
           },
         ]
+      }
+      calendar_events: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          end_time: string | null
+          id_event: number
+          id_user: number | null
+          is_all_day: boolean | null
+          location: string | null
+          meeting_link: string | null
+          start_time: string | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          end_time?: string | null
+          id_event?: number
+          id_user?: number | null
+          is_all_day?: boolean | null
+          location?: string | null
+          meeting_link?: string | null
+          start_time?: string | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          end_time?: string | null
+          id_event?: number
+          id_user?: number | null
+          is_all_day?: boolean | null
+          location?: string | null
+          meeting_link?: string | null
+          start_time?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_calendar_users"
+            columns: ["id_user"]
+            isOneToOne: false
+            referencedRelation: "supabase_users"
+            referencedColumns: ["id_user"]
+          },
+        ]
+      }
+      call_archive: {
+        Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          id_archive: number
+          original_call_id: number | null
+          phone_number: string | null
+          status: boolean | null
+          total_call_time: string | null
+          transcription: Json | null
+        }
+        Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          id_archive?: number
+          original_call_id?: number | null
+          phone_number?: string | null
+          status?: boolean | null
+          total_call_time?: string | null
+          transcription?: Json | null
+        }
+        Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          id_archive?: number
+          original_call_id?: number | null
+          phone_number?: string | null
+          status?: boolean | null
+          total_call_time?: string | null
+          transcription?: Json | null
+        }
+        Relationships: []
       }
       call_history: {
         Row: {
           created_at: string | null
           id_call: number
-          phone_number: number | null
+          phone_number: string | null
           status: boolean | null
           total_call_time: string | null
           transcription: Json | null
@@ -59,7 +153,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id_call?: number
-          phone_number?: number | null
+          phone_number?: string | null
           status?: boolean | null
           total_call_time?: string | null
           transcription?: Json | null
@@ -67,44 +161,161 @@ export type Database = {
         Update: {
           created_at?: string | null
           id_call?: number
-          phone_number?: number | null
+          phone_number?: string | null
           status?: boolean | null
           total_call_time?: string | null
           transcription?: Json | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "fk_call_callers"
+            columns: ["phone_number"]
+            isOneToOne: false
+            referencedRelation: "callers"
+            referencedColumns: ["phone_number"]
+          },
+        ]
+      }
+      callers: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id_caller: number
+          name: string | null
+          phone_number: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id_caller?: number
+          name?: string | null
+          phone_number?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id_caller?: number
+          name?: string | null
+          phone_number?: string | null
+        }
         Relationships: []
+      }
+      elevenlabs_agent: {
+        Row: {
+          code: string | null
+          id_elevenlabs_agent: number
+          id_organization: number | null
+        }
+        Insert: {
+          code?: string | null
+          id_elevenlabs_agent: number
+          id_organization?: number | null
+        }
+        Update: {
+          code?: string | null
+          id_elevenlabs_agent?: number
+          id_organization?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevenlabs_agent_id_organization_fkey"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
+        ]
       }
       history_payment: {
         Row: {
           created_at: string | null
-          id_paid_user: number | null
+          id_organization: number | null
           id_payment: number
           nif: number | null
           value: number | null
         }
         Insert: {
           created_at?: string | null
-          id_paid_user?: number | null
+          id_organization?: number | null
           id_payment?: number
           nif?: number | null
           value?: number | null
         }
         Update: {
           created_at?: string | null
-          id_paid_user?: number | null
+          id_organization?: number | null
           id_payment?: number
           nif?: number | null
           value?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "fk_history_payment_paid_user"
-            columns: ["id_paid_user"]
+            foreignKeyName: "fk_payment_org"
+            columns: ["id_organization"]
             isOneToOne: false
-            referencedRelation: "paid_user"
-            referencedColumns: ["id_paid_user"]
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
           },
         ]
+      }
+      history_remaining_min_mesg: {
+        Row: {
+          id_history_remaining: number
+          id_organization: number | null
+          remaining_messages: number | null
+          remaining_minutes: number | null
+          yearmonth: string
+        }
+        Insert: {
+          id_history_remaining?: number
+          id_organization?: number | null
+          remaining_messages?: number | null
+          remaining_minutes?: number | null
+          yearmonth: string
+        }
+        Update: {
+          id_history_remaining?: number
+          id_organization?: number | null
+          remaining_messages?: number | null
+          remaining_minutes?: number | null
+          yearmonth?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "history_remaining_min_mesg_id_organization_fkey"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
+        ]
+      }
+      message_archive: {
+        Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          content: string | null
+          id_archive: number
+          original_message_id: number | null
+          phone_number: string | null
+        }
+        Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          content?: string | null
+          id_archive?: number
+          original_message_id?: number | null
+          phone_number?: string | null
+        }
+        Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          content?: string | null
+          id_archive?: number
+          original_message_id?: number | null
+          phone_number?: string | null
+        }
+        Relationships: []
       }
       message_history: {
         Row: {
@@ -125,22 +336,33 @@ export type Database = {
           id_message?: number
           phone_number?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_message_callers"
+            columns: ["phone_number"]
+            isOneToOne: false
+            referencedRelation: "callers"
+            referencedColumns: ["phone_number"]
+          },
+        ]
       }
       modules: {
         Row: {
+          code: string | null
           description: string | null
           id_module: number
           name: string | null
           permission: string | null
         }
         Insert: {
+          code?: string | null
           description?: string | null
           id_module?: number
           name?: string | null
           permission?: string | null
         }
         Update: {
+          code?: string | null
           description?: string | null
           id_module?: number
           name?: string | null
@@ -148,40 +370,49 @@ export type Database = {
         }
         Relationships: []
       }
-      paid_user: {
+      organization: {
         Row: {
           created_at: string | null
           dashboard_link: string | null
           email: string | null
-          id_paid_user: number
+          id_organization: number
           id_supabase_credentials: number | null
+          name: string | null
           nif: number | null
-          phone_number: number | null
+          phone_number: string | null
           plan: string | null
+          remaining_messages: number | null
+          remaining_minutes: number | null
         }
         Insert: {
           created_at?: string | null
           dashboard_link?: string | null
           email?: string | null
-          id_paid_user?: number
+          id_organization?: number
           id_supabase_credentials?: number | null
+          name?: string | null
           nif?: number | null
-          phone_number?: number | null
+          phone_number?: string | null
           plan?: string | null
+          remaining_messages?: number | null
+          remaining_minutes?: number | null
         }
         Update: {
           created_at?: string | null
           dashboard_link?: string | null
           email?: string | null
-          id_paid_user?: number
+          id_organization?: number
           id_supabase_credentials?: number | null
+          name?: string | null
           nif?: number | null
-          phone_number?: number | null
+          phone_number?: string | null
           plan?: string | null
+          remaining_messages?: number | null
+          remaining_minutes?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "paid_user_id_supabase_credentials_fkey"
+            foreignKeyName: "fk_org_credentials"
             columns: ["id_supabase_credentials"]
             isOneToOne: false
             referencedRelation: "supabase_credentials"
@@ -189,7 +420,25 @@ export type Database = {
           },
         ]
       }
-      roles: {
+      supabase_credentials: {
+        Row: {
+          host: string | null
+          id_supabase_credentials: number
+          service_secret: string | null
+        }
+        Insert: {
+          host?: string | null
+          id_supabase_credentials?: number
+          service_secret?: string | null
+        }
+        Update: {
+          host?: string | null
+          id_supabase_credentials?: number
+          service_secret?: string | null
+        }
+        Relationships: []
+      }
+      supabase_roles: {
         Row: {
           description: string | null
           id_role: number
@@ -210,21 +459,90 @@ export type Database = {
         }
         Relationships: []
       }
-      supabase_credentials: {
+      supabase_users: {
         Row: {
-          host: string | null
-          id_supabase_credentials: number
-          service_secret: string | null
+          email: string | null
+          id_organization: number | null
+          id_role: number | null
+          id_user: number
         }
         Insert: {
-          host?: string | null
-          id_supabase_credentials?: number
-          service_secret?: string | null
+          email?: string | null
+          id_organization?: number | null
+          id_role?: number | null
+          id_user?: number
         }
         Update: {
-          host?: string | null
-          id_supabase_credentials?: number
-          service_secret?: string | null
+          email?: string | null
+          id_organization?: number | null
+          id_role?: number | null
+          id_user?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_users_org"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
+          {
+            foreignKeyName: "fk_users_roles"
+            columns: ["id_role"]
+            isOneToOne: false
+            referencedRelation: "supabase_roles"
+            referencedColumns: ["id_role"]
+          },
+        ]
+      }
+      tables: {
+        Row: {
+          code: string | null
+          id_table: number
+        }
+        Insert: {
+          code?: string | null
+          id_table?: number
+        }
+        Update: {
+          code?: string | null
+          id_table?: number
+        }
+        Relationships: []
+      }
+      task_archive: {
+        Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          category: string | null
+          description: string | null
+          id_archive: number
+          original_task_id: number | null
+          phone_number: string | null
+          status: boolean | null
+          title: string | null
+        }
+        Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          category?: string | null
+          description?: string | null
+          id_archive?: number
+          original_task_id?: number | null
+          phone_number?: string | null
+          status?: boolean | null
+          title?: string | null
+        }
+        Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          category?: string | null
+          description?: string | null
+          id_archive?: number
+          original_task_id?: number | null
+          phone_number?: string | null
+          status?: boolean | null
+          title?: string | null
         }
         Relationships: []
       }
@@ -234,7 +552,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           id_task: number
-          phone_number: number | null
+          phone_number: string | null
           status: boolean | null
           title: string | null
         }
@@ -243,7 +561,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id_task?: number
-          phone_number?: number | null
+          phone_number?: string | null
           status?: boolean | null
           title?: string | null
         }
@@ -252,8 +570,44 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id_task?: number
-          phone_number?: number | null
+          phone_number?: string | null
           status?: boolean | null
+          title?: string | null
+        }
+        Relationships: []
+      }
+      ticket_archive: {
+        Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          category: string | null
+          description: string | null
+          id_archive: number
+          id_user: number | null
+          original_ticket_id: number | null
+          priority: string | null
+          title: string | null
+        }
+        Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          category?: string | null
+          description?: string | null
+          id_archive?: number
+          id_user?: number | null
+          original_ticket_id?: number | null
+          priority?: string | null
+          title?: string | null
+        }
+        Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          category?: string | null
+          description?: string | null
+          id_archive?: number
+          id_user?: number | null
+          original_ticket_id?: number | null
+          priority?: string | null
           title?: string | null
         }
         Relationships: []
@@ -283,93 +637,109 @@ export type Database = {
           priority?: string | null
           title?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "tickets_id_user_fkey"
-            columns: ["id_user"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id_user"]
-          },
-        ]
+        Relationships: []
       }
-      tmodules_tpaid_user: {
+      tmodules_torganization: {
         Row: {
           id_module: number
-          id_paid_user: number
+          id_organization: number | null
         }
         Insert: {
-          id_module: number
-          id_paid_user: number
+          id_module?: number
+          id_organization?: number | null
         }
         Update: {
           id_module?: number
-          id_paid_user?: number
+          id_organization?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "tmodules_tpaid_user_id_module_fkey"
+            foreignKeyName: "fk_tmodules_module"
+            columns: ["id_module"]
+            isOneToOne: true
+            referencedRelation: "modules"
+            referencedColumns: ["id_module"]
+          },
+          {
+            foreignKeyName: "fk_tmodules_org"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
+        ]
+      }
+      tmodules_ttables: {
+        Row: {
+          id_module: number
+          id_table: number
+        }
+        Insert: {
+          id_module: number
+          id_table: number
+        }
+        Update: {
+          id_module?: number
+          id_table?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tmodules_tables_module"
             columns: ["id_module"]
             isOneToOne: false
             referencedRelation: "modules"
             referencedColumns: ["id_module"]
           },
           {
-            foreignKeyName: "tmodules_tpaid_user_id_paid_user_fkey"
-            columns: ["id_paid_user"]
+            foreignKeyName: "fk_tmodules_tables_table"
+            columns: ["id_table"]
             isOneToOne: false
-            referencedRelation: "paid_user"
-            referencedColumns: ["id_paid_user"]
+            referencedRelation: "tables"
+            referencedColumns: ["id_table"]
           },
         ]
       }
       twilio_numbers: {
         Row: {
-          id_paid_user: number | null
+          id_organization: number | null
           id_phone_number: number
-          phone_number: number | null
+          phone_number: string | null
         }
         Insert: {
-          id_paid_user?: number | null
+          id_organization?: number | null
           id_phone_number?: number
-          phone_number?: number | null
+          phone_number?: string | null
         }
         Update: {
-          id_paid_user?: number | null
+          id_organization?: number | null
           id_phone_number?: number
-          phone_number?: number | null
+          phone_number?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "twilio_numbers_id_paid_user_fkey"
-            columns: ["id_paid_user"]
+            foreignKeyName: "fk_twilio_org"
+            columns: ["id_organization"]
             isOneToOne: false
-            referencedRelation: "paid_user"
-            referencedColumns: ["id_paid_user"]
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
           },
         ]
       }
-      users: {
+      workflows: {
         Row: {
-          created_at: string | null
-          email: string | null
-          id_user: number
+          code: string | null
+          id_workflow: number
           name: string | null
-          phone_number: number | null
         }
         Insert: {
-          created_at?: string | null
-          email?: string | null
-          id_user?: number
+          code?: string | null
+          id_workflow?: number
           name?: string | null
-          phone_number?: number | null
         }
         Update: {
-          created_at?: string | null
-          email?: string | null
-          id_user?: number
+          code?: string | null
+          id_workflow?: number
           name?: string | null
-          phone_number?: number | null
         }
         Relationships: []
       }
