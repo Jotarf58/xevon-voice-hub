@@ -9,7 +9,7 @@ interface User {
   role: 'developer' | 'manager' | 'user' | 'XEVON';
   team: string;
   isPaidUser: boolean;
-  paidUserId?: number;
+  organizationId?: number;
 }
 
 interface AuthContextType {
@@ -53,15 +53,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error fetching profile:', error);
       }
 
-      // Check if user is a paid user
-      const { data: paidUser, error: paidUserError } = await supabase
-        .from('paid_user')
+      // Check if user is in an organization
+      const { data: organization, error: organizationError } = await supabase
+        .from('organization')
         .select('*')
         .eq('email', session.user.email)
         .maybeSingle();
 
-      if (paidUserError) {
-        console.error('Error fetching paid user:', paidUserError);
+      if (organizationError) {
+        console.error('Error fetching organization:', organizationError);
       }
       
       // Determine user role - hardcoded XEVON bypass
@@ -69,12 +69,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const baseUser = {
         id: userId,
-        name: profile?.name || session.user.email?.split('@')[0] || 'User',
+        name: profile?.name || organization?.name || session.user.email?.split('@')[0] || 'User',
         email: session.user.email || '',
         role: userRole as 'user' | 'XEVON',
         team: 'default',
-        isPaidUser: !!paidUser,
-        paidUserId: paidUser?.id_paid_user
+        isPaidUser: !!organization,
+        organizationId: organization?.id_organization
       };
 
       return baseUser;

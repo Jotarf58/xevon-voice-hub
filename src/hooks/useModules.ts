@@ -42,21 +42,21 @@ export const useUserModules = () => {
         }
 
         // Normal flow for regular users
-        // First, get the paid_user by email
-        const { data: paidUser, error: paidUserError } = await supabase
-          .from('paid_user')
-          .select('id_paid_user')
+        // First, get the organization by email
+        const { data: organization, error: organizationError } = await supabase
+          .from('organization')
+          .select('id_organization')
           .eq('email', user.email)
           .maybeSingle();
 
-        if (paidUserError) {
-          console.error('Error fetching paid user:', paidUserError);
-          setError('Erro ao buscar usuário');
+        if (organizationError) {
+          console.error('Error fetching organization:', organizationError);
+          setError('Erro ao buscar organização');
           setLoading(false);
           return;
         }
 
-        if (!paidUser) {
+        if (!organization) {
           setModules([]);
           setLoading(false);
           return;
@@ -64,9 +64,9 @@ export const useUserModules = () => {
 
         // Get user modules through the junction table
         const { data: userModuleRelations, error: relationsError } = await supabase
-          .from('tmodules_tpaid_user')
+          .from('tmodules_torganization')
           .select('id_module')
-          .eq('id_paid_user', paidUser.id_paid_user);
+          .eq('id_organization', organization.id_organization);
 
         if (relationsError) {
           console.error('Error fetching user module relations:', relationsError);
