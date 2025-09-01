@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           supabase_roles!inner(name, permissions),
           organization!inner(name, id_organization)
         `)
-        .eq('user_id', userId)
+        .eq('email', session.user.email)
         .maybeSingle();
 
       if (userError) {
