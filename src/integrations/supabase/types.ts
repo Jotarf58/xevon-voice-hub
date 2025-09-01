@@ -181,6 +181,7 @@ export type Database = {
           status: boolean | null
           total_call_time: string | null
           transcription: Json | null
+          twilio_number: number | null
         }
         Insert: {
           created_at?: string | null
@@ -190,6 +191,7 @@ export type Database = {
           status?: boolean | null
           total_call_time?: string | null
           transcription?: Json | null
+          twilio_number?: number | null
         }
         Update: {
           created_at?: string | null
@@ -199,6 +201,7 @@ export type Database = {
           status?: boolean | null
           total_call_time?: string | null
           transcription?: Json | null
+          twilio_number?: number | null
         }
         Relationships: [
           {
@@ -215,6 +218,13 @@ export type Database = {
             referencedRelation: "callers"
             referencedColumns: ["phone_number"]
           },
+          {
+            foreignKeyName: "fk_call_history_twilio"
+            columns: ["twilio_number"]
+            isOneToOne: false
+            referencedRelation: "twilio_numbers"
+            referencedColumns: ["id_phone_number"]
+          },
         ]
       }
       callers: {
@@ -223,6 +233,7 @@ export type Database = {
           email: string | null
           id_caller: number
           id_organization: number | null
+          id_phone_number: number | null
           name: string | null
           phone_number: string | null
         }
@@ -231,6 +242,7 @@ export type Database = {
           email?: string | null
           id_caller?: number
           id_organization?: number | null
+          id_phone_number?: number | null
           name?: string | null
           phone_number?: string | null
         }
@@ -239,12 +251,86 @@ export type Database = {
           email?: string | null
           id_caller?: number
           id_organization?: number | null
+          id_phone_number?: number | null
           name?: string | null
           phone_number?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "callers_id_organization_fkey"
+            foreignKeyName: "fk_callers_twilio"
+            columns: ["id_phone_number"]
+            isOneToOne: false
+            referencedRelation: "twilio_numbers"
+            referencedColumns: ["id_phone_number"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          created_at: string | null
+          id_document: number
+          id_organization: number | null
+          name: string | null
+          size: string | null
+          type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id_document: number
+          id_organization?: number | null
+          name?: string | null
+          size?: string | null
+          type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id_document?: number
+          id_organization?: number | null
+          name?: string | null
+          size?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_id_organization_fkey"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
+        ]
+      }
+      documents_agent: {
+        Row: {
+          created_at: string | null
+          format: string | null
+          id_document: number
+          id_organization: number | null
+          name: string | null
+          size: string | null
+          type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          format?: string | null
+          id_document: number
+          id_organization?: number | null
+          name?: string | null
+          size?: string | null
+          type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          format?: string | null
+          id_document?: number
+          id_organization?: number | null
+          name?: string | null
+          size?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_agent_id_organization_fkey"
             columns: ["id_organization"]
             isOneToOne: false
             referencedRelation: "organization"
@@ -255,26 +341,39 @@ export type Database = {
       elevenlabs_agent: {
         Row: {
           code: string | null
+          id_document: number | null
           id_elevenlabs_agent: number
           id_organization: number | null
+          id_phone_number: number | null
         }
         Insert: {
           code?: string | null
+          id_document?: number | null
           id_elevenlabs_agent: number
           id_organization?: number | null
+          id_phone_number?: number | null
         }
         Update: {
           code?: string | null
+          id_document?: number | null
           id_elevenlabs_agent?: number
           id_organization?: number | null
+          id_phone_number?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "elevenlabs_agent_id_organization_fkey"
-            columns: ["id_organization"]
+            foreignKeyName: "fk_elevenlabs_document"
+            columns: ["id_document"]
             isOneToOne: false
-            referencedRelation: "organization"
-            referencedColumns: ["id_organization"]
+            referencedRelation: "documents_agent"
+            referencedColumns: ["id_document"]
+          },
+          {
+            foreignKeyName: "fk_elevenlabs_twilio"
+            columns: ["id_phone_number"]
+            isOneToOne: false
+            referencedRelation: "twilio_numbers"
+            referencedColumns: ["id_phone_number"]
           },
         ]
       }
@@ -404,10 +503,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_message_callers"
+            foreignKeyName: "fk_message_twilio"
             columns: ["phone_number"]
             isOneToOne: false
-            referencedRelation: "callers"
+            referencedRelation: "twilio_numbers"
             referencedColumns: ["phone_number"]
           },
           {
@@ -456,6 +555,7 @@ export type Database = {
           plan: string | null
           remaining_messages: number | null
           remaining_minutes: number | null
+          status: boolean | null
         }
         Insert: {
           created_at?: string | null
@@ -469,6 +569,7 @@ export type Database = {
           plan?: string | null
           remaining_messages?: number | null
           remaining_minutes?: number | null
+          status?: boolean | null
         }
         Update: {
           created_at?: string | null
@@ -482,59 +583,46 @@ export type Database = {
           plan?: string | null
           remaining_messages?: number | null
           remaining_minutes?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_org_credentials"
-            columns: ["id_supabase_credentials"]
-            isOneToOne: false
-            referencedRelation: "supabase_credentials"
-            referencedColumns: ["id_supabase_credentials"]
-          },
-        ]
-      }
-      supabase_credentials: {
-        Row: {
-          host: string | null
-          id_supabase_credentials: number
-          service_secret: string | null
-        }
-        Insert: {
-          host?: string | null
-          id_supabase_credentials?: number
-          service_secret?: string | null
-        }
-        Update: {
-          host?: string | null
-          id_supabase_credentials?: number
-          service_secret?: string | null
+          status?: boolean | null
         }
         Relationships: []
       }
       supabase_roles: {
         Row: {
           description: string | null
+          id_organization: number | null
           id_role: number
           name: string | null
           permissions: string | null
         }
         Insert: {
           description?: string | null
+          id_organization?: number | null
           id_role?: number
           name?: string | null
           permissions?: string | null
         }
         Update: {
           description?: string | null
+          id_organization?: number | null
           id_role?: number
           name?: string | null
           permissions?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_roles_org"
+            columns: ["id_organization"]
+            isOneToOne: false
+            referencedRelation: "organization"
+            referencedColumns: ["id_organization"]
+          },
+        ]
       }
       supabase_users: {
         Row: {
           email: string | null
+          id_caller: number | null
           id_organization: number | null
           id_role: number | null
           id_user: number
@@ -542,6 +630,7 @@ export type Database = {
         }
         Insert: {
           email?: string | null
+          id_caller?: number | null
           id_organization?: number | null
           id_role?: number | null
           id_user?: number
@@ -549,6 +638,7 @@ export type Database = {
         }
         Update: {
           email?: string | null
+          id_caller?: number | null
           id_organization?: number | null
           id_role?: number | null
           id_user?: number
@@ -568,6 +658,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "supabase_roles"
             referencedColumns: ["id_role"]
+          },
+          {
+            foreignKeyName: "fk_users_caller"
+            columns: ["id_caller"]
+            isOneToOne: false
+            referencedRelation: "callers"
+            referencedColumns: ["id_caller"]
           },
           {
             foreignKeyName: "fk_users_org"
@@ -862,20 +959,31 @@ export type Database = {
       workflows: {
         Row: {
           code: string | null
+          id_module: number | null
           id_workflow: number
           name: string | null
         }
         Insert: {
           code?: string | null
+          id_module?: number | null
           id_workflow?: number
           name?: string | null
         }
         Update: {
           code?: string | null
+          id_module?: number | null
           id_workflow?: number
           name?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_workflows_module"
+            columns: ["id_module"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id_module"]
+          },
+        ]
       }
     }
     Views: {
