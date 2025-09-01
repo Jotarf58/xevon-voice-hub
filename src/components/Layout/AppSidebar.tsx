@@ -11,7 +11,17 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
-  Settings
+  Settings,
+  Calendar,
+  DollarSign,
+  Shield,
+  Workflow,
+  Code,
+  Database,
+  UserCog,
+  ContactRound,
+  HeadphonesIcon,
+  Crown
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,18 +41,42 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 // Map module names to navigation items
-const getModuleNavItem = (moduleName: string) => {
+const getModuleNavItem = (moduleName: string, moduleCode: string) => {
   const moduleMap: Record<string, { title: string; url: string; icon: any }> = {
+    // Core modules
     'dashboard': { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+    'dahsboard': { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard }, // Handle typo in DB
+    'chamadas': { title: 'Chamadas', url: '/dashboard/calls', icon: Phone },
     'calls': { title: 'Chamadas', url: '/dashboard/calls', icon: Phone },
+    'mensagens': { title: 'Mensagens', url: '/dashboard/messages', icon: MessageSquare },
     'messages': { title: 'Mensagens', url: '/dashboard/messages', icon: MessageSquare },
     'tasks': { title: 'Tarefas', url: '/dashboard/tasks', icon: CheckSquare },
     'tickets': { title: 'Tickets', url: '/dashboard/tickets', icon: Ticket },
     'users': { title: 'Utilizadores', url: '/dashboard/users', icon: Users },
-    'settings': { title: 'Configurações', url: '/dashboard/settings', icon: Settings },
+    'utilizadores': { title: 'Utilizadores', url: '/dashboard/users', icon: Users },
+    
+    // Extended modules
+    'callers': { title: 'Contactos', url: '/dashboard/callers', icon: ContactRound },
+    'suporte': { title: 'Suporte', url: '/dashboard/support', icon: HeadphonesIcon },
+    'support': { title: 'Suporte', url: '/dashboard/support', icon: HeadphonesIcon },
+    'suporte premium': { title: 'Suporte Premium', url: '/dashboard/premium-support', icon: Crown },
+    'premium_support': { title: 'Suporte Premium', url: '/dashboard/premium-support', icon: Crown },
+    'roles': { title: 'Roles', url: '/dashboard/roles', icon: UserCog },
+    'modulos': { title: 'Módulos', url: '/dashboard/modules', icon: Settings },
+    'modules': { title: 'Módulos', url: '/dashboard/modules', icon: Settings },
+    'workflows': { title: 'Workflows', url: '/dashboard/workflows', icon: Workflow },
+    'ambiente de testes code': { title: 'Ambiente de Testes', url: '/dashboard/test-environment', icon: Code },
+    'test_environment': { title: 'Ambiente de Testes', url: '/dashboard/test-environment', icon: Code },
+    'tables': { title: 'Tabelas', url: '/dashboard/tables', icon: Database },
+    'calendar': { title: 'Calendário', url: '/dashboard/calendar', icon: Calendar },
+    'pedidos de orçamento': { title: 'Orçamentos', url: '/dashboard/budgets', icon: DollarSign },
+    'budgets': { title: 'Orçamentos', url: '/dashboard/budgets', icon: DollarSign },
+    'criação de agente': { title: 'Criar Agente', url: '/dashboard/agent-creation', icon: Shield },
+    'agent_creation': { title: 'Criar Agente', url: '/dashboard/agent-creation', icon: Shield }
   };
   
-  return moduleMap[moduleName?.toLowerCase()] || null;
+  // First try by name, then by code
+  return moduleMap[moduleName?.toLowerCase()] || moduleMap[moduleCode?.toLowerCase()] || null;
 };
 
 export function AppSidebar() {
@@ -86,7 +120,7 @@ export function AppSidebar() {
     }
 
     const items = modules
-      .map(module => getModuleNavItem(module.name || ''))
+      .map(module => getModuleNavItem(module.name || '', module.description || ''))
       .filter(item => item !== null);
 
     // Always include dashboard as first item
